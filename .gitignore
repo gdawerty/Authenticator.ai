@@ -1,0 +1,37 @@
+# --- Frontend (Vite + React + TypeScript) ---
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Optional: local Vite config overrides
+frontend/*.local
+
+# --- Backend (Flask + Python) ---
+backend/__pycache__/
+backend/*.pyc
+backend/*.pyo
+backend/*.pyd
+backend/instance/
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.coverage
+backend/.venv/
+backend/venv/
+
+# Database files (if using SQLite locally)
+*.sqlite3
+*.db
+
+# --- Environment variables ---
+.env
+.env.*
+!env.example  # allow committed example env files
+
+# --- OS-specific ---
+.DS_Store
+Thumbs.db
+
+# --- IDE / Editor ---
+.vscode/
+.idea/
+*.swp
