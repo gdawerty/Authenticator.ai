@@ -54,3 +54,22 @@ curl -X POST "http://localhost:8000/upload" \
   -H "accept: application/json" \
   -H "Content-Type: multipart/form-data" \
   -F "file=@/path/to/your/file.txt"
+
+
+6️⃣ Run the Frontend
+bash
+Copy
+Edit
+# Go into the frontend folder
+cd frontend
+
+# Install Node.js if not already installed
+# For Mac with Homebrew:
+brew install node
+# For Windows: Download from https://nodejs.org/
+
+# Install dependencies
+npm install
+
+# Start the development server
+npm run dev
