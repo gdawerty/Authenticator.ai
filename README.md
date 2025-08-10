@@ -66,7 +66,9 @@ cd frontend
 # Install Node.js if not already installed
 # For Mac with Homebrew:
 brew install node
-# For Windows: Download from https://nodejs.org/
+
+# For Windows:
+Download from https://nodejs.org/
 
 # Install dependencies
 npm install
