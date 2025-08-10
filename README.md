@@ -1,1 +1,56 @@
-# Authenticator.ai
+Authenticator.ai
+1️⃣ Create & Activate Virtual Environment
+bash
+Copy
+Edit
+# Go into the backend folder
+cd backend
+
+# Create virtual environment
+python3 -m venv venv
+
+# Activate virtual environment (Mac/Linux)
+source venv/bin/activate
+
+# Activate virtual environment (Windows PowerShell)
+venv\Scripts\Activate
+2️⃣ Install Required Packages
+bash
+Copy
+Edit
+pip install flask==3.0.3 flask-restx==1.3.0 werkzeug==3.0.3
+Or install from requirements.txt:
+
+bash
+Copy
+Edit
+pip install -r requirements.txt
+3️⃣ Run the Backend Server
+bash
+Copy
+Edit
+python app.py
+You should see:
+
+nginx
+Copy
+Edit
+Flask API Server Starting...
+ * Running on http://localhost:8000
+4️⃣ Access the API
+Root Endpoint → http://localhost:8000/
+
+Swagger Docs → http://localhost:8000/docs
+
+Health Check → http://localhost:8000/health
+
+Upload Endpoint (POST) → http://localhost:8000/upload
+
+5️⃣ Example File Upload with cURL
+bash
+Copy
+Edit
+curl -X POST "http://localhost:8000/upload" \
+  -H "accept: application/json" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@/path/to/your/file.txt"
