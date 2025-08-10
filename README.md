@@ -5,7 +5,7 @@
 # Go into the backend folder
 cd backend
 
-# Create virtual environment
+# Create virtual environment #its already been created dont do this unless needed
 python3 -m venv venv
 
 # Activate virtual environment (Mac/Linux)
