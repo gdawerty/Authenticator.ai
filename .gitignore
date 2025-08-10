@@ -23,8 +23,8 @@ backend/venv/
 *.db
 
 # --- Environment variables ---
-.env
-.env.*
+*.env
+*.env.*
 !env.example  # allow committed example env files
 
 # --- OS-specific ---
