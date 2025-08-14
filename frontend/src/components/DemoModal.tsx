@@ -78,7 +78,8 @@ const DemoModal: React.FC<DemoModalProps> = ({ onClose }) => {
 
         // Stage 4: Assessment
         setLoadingStage(4);
-        const response = await fetch('http://localhost:5000/analyze', {
+        console.log('Sending request to analyze endpoint...');
+        const response = await fetch('http://localhost:8000/api/analyze', {
           method: 'POST',
           body: formData,
         });
@@ -86,8 +87,9 @@ const DemoModal: React.FC<DemoModalProps> = ({ onClose }) => {
         if (!response.ok) {
           const errorText = await response.text();
           console.error('Analysis request failed:', response.status, errorText);
-          throw new Error(errorText || 'Analysis request failed');
+          throw new Error(`Analysis request failed: ${response.status} ${errorText}`);
         }
+        console.log('Response received:', response);
 
         const result = await response.json();
         console.log('Analysis result:', result);
@@ -228,7 +230,7 @@ const DemoModal: React.FC<DemoModalProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-charcoal-950 bg-opacity-95 flex items-center justify-center p-8" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="fixed inset-0 z-[9999] bg-charcoal-950 bg-opacity-100 flex items-center justify-center p-8" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="bg-charcoal-900 rounded-2xl p-12 max-w-5xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-12">
           <h2 className="text-3xl font-bold text-white">Detection Demo</h2>
@@ -267,8 +269,7 @@ const DemoModal: React.FC<DemoModalProps> = ({ onClose }) => {
         </div>
 
         <div className="grid md:grid-cols-2 gap-12">
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold text-white">Input Content</h3>
+          <div>
             {renderContent()}
             {((contentType === 'text' && textInput.trim().length > 0) || 
               (contentType === 'document' && documentFile)) && (

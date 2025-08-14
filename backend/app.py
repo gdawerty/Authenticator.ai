@@ -23,6 +23,66 @@ api = Api(app,
           doc="/docs",
           prefix="/api")
 
+# Define request parser for file upload
+file_upload = api.parser()
+file_upload.add_argument('file', type=FileStorage, location='files', required=True, help='File to analyze')
+
+@api.route('/analyze')
+class AnalyzeResource(Resource):
+    @api.expect(file_upload)
+    def post(self):
+        """Analyze uploaded file for AI detection"""
+        if 'file' not in request.files:
+            return {'error': 'No file provided'}, 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return {'error': 'No file selected'}, 400
+            
+        if not allowed_file(file.filename):
+            return {'error': 'File type not allowed'}, 400
+
+        try:
+            # Save file with unique name
+            filename = generate_unique_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+
+            # Get basic file info
+            file_size = os.path.getsize(filepath)
+            content_info = detect_content_type(filepath)
+
+            # Here you would add your actual AI detection logic
+            # For now, returning a mock response
+            return {
+                'file_info': {
+                    'name': filename,
+                    'size': file_size,
+                    'type': content_info.get('mime_type', 'unknown')
+                },
+                'content_analysis': {
+                    'content_type': content_info.get('content_category', 'unknown'),
+                    'word_count': 0,  # You would implement actual word counting
+                    'language': 'English'  # You would implement language detection
+                },
+                'domain_classification': {
+                    'domain': 'General',
+                    'confidence': 0.8
+                },
+                'authenticity_assessment': {
+                    'score': 75,  # Mock score - implement actual AI detection here
+                    'confidence': 'High',
+                    'factors': [
+                        'Document structure analysis',
+                        'Language pattern evaluation',
+                        'Content consistency check',
+                        'Writing style assessment'
+                    ]
+                }
+            }
+        except Exception as e:
+            return {'error': str(e)}, 500
+
 BASE_DIR = os.path.dirname(__file__)
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")  # Changed from tmp_uploads to uploads
 ALLOWED_EXT = {"txt", "pdf", "doc", "docx", "jpg", "jpeg", "png", "gif"}
