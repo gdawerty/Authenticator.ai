@@ -8,6 +8,7 @@ import PricingSection from './components/PricingSection'
 import ContactSection from './components/ContactSection'
 import Footer from './components/Footer'
 import DemoModal from './components/DemoModal'
+import DocumentsSection from './components/DocumentsSection'
 
 const App: React.FC = () => {
   const [showDemo, setShowDemo] = useState(false)
@@ -15,7 +16,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     // Fetch from Flask backend
-    fetch("/api/hello")
+    fetch("/docs")
       .then(res => res.json())
       .then(data => setApiMessage(data.message))
       .catch(err => console.error("API fetch error:", err))
@@ -43,6 +44,10 @@ const App: React.FC = () => {
             <APISection />
             <PricingSection />
             <ContactSection />
+            {/* Documents Section anchor */}
+            <div id="documents">
+              <DocumentsSection />
+            </div>
           </div>
         </main>
         

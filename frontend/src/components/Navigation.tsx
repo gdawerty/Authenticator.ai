@@ -19,9 +19,10 @@ const Navigation: React.FC = () => {
               <span className="text-xl font-semibold text-white">Authentia</span>
             </div>
             <div className="hidden md:flex items-center space-x-12">
-              <a href="#features" className="text-charcoal-300 hover:text-white transition-colors duration-300 font-medium">Features</a>
-              <a href="#api" className="text-charcoal-300 hover:text-white transition-colors duration-300 font-medium">API</a>
-              <a href="#pricing" className="text-charcoal-300 hover:text-white transition-colors duration-300 font-medium">Pricing</a>
+                <a href="#features" className="text-charcoal-300 hover:text-white transition-colors duration-300 font-medium">Features</a>
+                <a href="#api" className="text-charcoal-300 hover:text-white transition-colors duration-300 font-medium">API</a>
+                <a href="#pricing" className="text-charcoal-300 hover:text-white transition-colors duration-300 font-medium">Pricing</a>
+                <a href="#documents" className="text-charcoal-300 hover:text-white transition-colors duration-300 font-medium">Documents</a>
               <button className="bg-white text-black px-6 py-2.5 rounded-lg hover:bg-charcoal-100 transition-all duration-300 font-medium hover-lift">
                 Sign In
               </button>
@@ -65,6 +66,13 @@ const Navigation: React.FC = () => {
             onClick={toggleMobileMenu}
           >
             Pricing
+          </a>
+          <a 
+            href="#documents" 
+            className="text-xl text-charcoal-300 hover:text-white transition-colors duration-300 font-medium"
+            onClick={toggleMobileMenu}
+          >
+            Documents
           </a>
           <button className="bg-white text-black px-8 py-3 rounded-lg hover:bg-charcoal-100 transition-all duration-300 font-medium hover-lift">
             Sign In
