@@ -26,10 +26,10 @@ The server will start at `http://127.0.0.1:8000`
 
 - 📁 File Upload & Storage
 - 🔍 Content Type Detection
-- 🧠 AI-powered Domain Classification
+- 🧠 AI-powered Domain Classification (Place Holder)
 - ⚡ Smart Routing Logic
 - 🔐 Document Authentication
-- 📊 Authenticity Scoring
+- 📊 Authenticity Scoring (Place Holder)
 - 🌐 Frontend Integration
 
 ## 📚 API Documentation
