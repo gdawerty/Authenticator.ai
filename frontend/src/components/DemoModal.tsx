@@ -5,21 +5,49 @@ interface DemoModalProps {
 }
 
 interface AnalysisResult {
+  file_id?: string;
+  timestamp?: string;
+  filename?: string;
+  authenticity_score?: number;
+  domain_classification?: {
+    category: string;
+    subcategory: string;
+    confidence: number;
+  };
+  authenticity_metrics?: {
+    content_consistency: number;
+    metadata_integrity: number;
+    format_validation: number;
+    style_consistency: number;
+  };
+  content_analysis?: {
+    language: string;
+    complexity_score: number;
+    formality_score: number;
+    tone: string;
+  };
+  ai_detection?: {
+    ai_generated_score: number;
+    human_authored_confidence: number;
+    detection_method: string;
+  };
+  security_analysis?: {
+    encryption: string;
+    digital_signatures: string[];
+    timestamp_validation: string;
+  };
+  recommendations?: {
+    verification_steps: string[];
+    risk_mitigation: string[];
+    security_suggestions: string[];
+  };
+  // Legacy properties for backward compatibility
   file_info?: {
     name: string;
     size: number;
     type: string;
   };
-  content_analysis?: {
-    content_type: string;
-    word_count: number;
-    language: string;
-  };
-  domain_classification?: {
-    domain: string;
-    confidence: number;
-  };
-  authenticity_assessment: {
+  authenticity_assessment?: {
     score: number;
     confidence: string;
     factors: string[];
@@ -79,24 +107,71 @@ const DemoModal: React.FC<DemoModalProps> = ({ onClose }) => {
         // Stage 4: Assessment
         setLoadingStage(4);
         console.log('Sending request to analyze endpoint...');
+        // Add analysis_type to formData
+        formData.append('analysis_type', 'comprehensive');
+        
+        // Log what we're sending
+        console.log('Sending FormData:');
+        for (let [key, value] of formData.entries()) {
+          console.log(key, value);
+        }
+
         const response = await fetch('http://localhost:8000/api/analyze', {
           method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+          },
           body: formData,
+          mode: 'cors', // Explicitly enable CORS
         });
 
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Analysis request failed:', response.status, errorText);
-          throw new Error(`Analysis request failed: ${response.status} ${errorText}`);
+          let errorMessage = '';
+          try {
+            const errorData = await response.json();
+            console.error('Error response:', errorData);
+            errorMessage = JSON.stringify(errorData, null, 2);
+          } catch (e) {
+            const errorText = await response.text();
+            console.error('Error text:', errorText);
+            errorMessage = errorText;
+          }
+          throw new Error(`Analysis request failed (${response.status}): ${errorMessage}`);
         }
         console.log('Response received:', response);
 
         const result = await response.json();
         console.log('Analysis result:', result);
 
+        // Transform the API response to match our frontend expectations
+        const transformedResult: AnalysisResult = {
+          file_id: result.file_id,
+          timestamp: result.timestamp,
+          filename: result.filename,
+          authenticity_score: result.authenticity_score || result.authenticity?.score,
+          domain_classification: result.domain_classification,
+          authenticity_metrics: result.authenticity_metrics,
+          content_analysis: result.content_analysis,
+          ai_detection: result.ai_detection,
+          security_analysis: result.security_analysis,
+          recommendations: result.recommendations,
+          // Create backward-compatible structure
+          // For authenticity_assessment.score: Higher = More Authentic (Less AI Generated)
+          authenticity_assessment: {
+            score: Math.round(((result.authenticity_score || result.authenticity?.score || 0.95) * 100)),
+            confidence: result.authenticity?.confidence || 'Medium',
+            factors: result.recommendations?.verification_steps || ['AI Detection Analysis', 'Content Structure Evaluation', 'Authenticity Scoring']
+          },
+          file_info: {
+            name: result.filename || documentFile.name,
+            size: documentFile.size,
+            type: documentFile.type
+          }
+        };
+
         // Stage 5: Complete
         setLoadingStage(5);
-        setAnalysisResult(result);
+        setAnalysisResult(transformedResult);
 
       } else if (contentType === 'text' && textInput.trim()) {
         // Simulated analysis for text input
@@ -112,12 +187,14 @@ const DemoModal: React.FC<DemoModalProps> = ({ onClose }) => {
             type: 'text/plain'
           },
           content_analysis: {
-            content_type: 'Text',
-            word_count: textInput.trim().split(/\s+/).length,
-            language: 'English'
+            language: 'English',
+            complexity_score: 0.75,
+            formality_score: 0.85,
+            tone: 'Professional'
           },
           domain_classification: {
-            domain: 'General',
+            category: 'General',
+            subcategory: 'Text',
             confidence: 0.85
           },
           authenticity_assessment: {
@@ -324,24 +401,24 @@ const DemoModal: React.FC<DemoModalProps> = ({ onClose }) => {
               ) : analysisResult ? (
                 <div className="w-full h-full overflow-y-auto space-y-6 py-2">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-white mb-4">AI Detection Score</div>
+                    <div className="text-2xl font-bold text-white mb-4">Authenticity Score</div>
                     <div className="relative w-full h-12 bg-charcoal-700 rounded-full overflow-hidden">
                       <div
                         className="absolute left-0 top-0 h-full transition-all duration-500 rounded-full"
                         style={{
-                          width: `${analysisResult.authenticity_assessment.score}%`,
+                          width: `${analysisResult.authenticity_assessment?.score || 0}%`,
                           background: `linear-gradient(90deg, 
-                            ${analysisResult.authenticity_assessment.score < 40 ? '#10b981' : 
-                              analysisResult.authenticity_assessment.score < 70 ? '#f59e0b' : '#ef4444'}
+                            ${(analysisResult.authenticity_assessment?.score || 0) > 70 ? '#10b981' : 
+                              (analysisResult.authenticity_assessment?.score || 0) > 40 ? '#f59e0b' : '#ef4444'}
                             0%, 
-                            ${analysisResult.authenticity_assessment.score < 40 ? '#34d399' : 
-                              analysisResult.authenticity_assessment.score < 70 ? '#fbbf24' : '#f87171'}
+                            ${(analysisResult.authenticity_assessment?.score || 0) > 70 ? '#34d399' : 
+                              (analysisResult.authenticity_assessment?.score || 0) > 40 ? '#fbbf24' : '#f87171'}
                             100%)`
                         }}
                       />
                       <div className="absolute inset-0 flex items-center justify-center">
                         <span className="text-xl font-bold text-white">
-                          {analysisResult.authenticity_assessment.score}% AI Generated
+                          {analysisResult.authenticity_assessment?.score || 0}% Authentic
                         </span>
                       </div>
                     </div>
@@ -364,9 +441,10 @@ const DemoModal: React.FC<DemoModalProps> = ({ onClose }) => {
                     <div className="bg-charcoal-700/50 rounded-lg p-4">
                       <h4 className="text-white font-semibold mb-2">Content Analysis</h4>
                       <div className="space-y-1 text-sm text-charcoal-300">
-                        <p>Type: {analysisResult.content_analysis.content_type}</p>
-                        <p>Words: {analysisResult.content_analysis.word_count}</p>
                         <p>Language: {analysisResult.content_analysis.language}</p>
+                        <p>Complexity: {(analysisResult.content_analysis.complexity_score * 100).toFixed(1)}%</p>
+                        <p>Formality: {(analysisResult.content_analysis.formality_score * 100).toFixed(1)}%</p>
+                        <p>Tone: {analysisResult.content_analysis.tone}</p>
                       </div>
                     </div>
                   )}
@@ -376,32 +454,88 @@ const DemoModal: React.FC<DemoModalProps> = ({ onClose }) => {
                     <div className="bg-charcoal-700/50 rounded-lg p-4">
                       <h4 className="text-white font-semibold mb-2">Domain Classification</h4>
                       <div className="space-y-1 text-sm text-charcoal-300">
-                        <p>Domain: {analysisResult.domain_classification.domain}</p>
+                        <p>Category: {analysisResult.domain_classification.category}</p>
+                        <p>Subcategory: {analysisResult.domain_classification.subcategory}</p>
                         <p>Confidence: {(analysisResult.domain_classification.confidence * 100).toFixed(1)}%</p>
                       </div>
                     </div>
                   )}
 
-                  {/* Assessment Details */}
-                  <div className="bg-charcoal-700/50 rounded-lg p-4">
-                    <h4 className="text-white font-semibold mb-2">Assessment Details</h4>
-                    <div className="space-y-1 text-sm text-charcoal-300">
-                      <p>Result: {
-                        analysisResult.authenticity_assessment.score < 40 ? 'Likely Human Written' :
-                        analysisResult.authenticity_assessment.score < 70 ? 'Potentially AI Generated' : 
-                        'Likely AI Generated'
-                      }</p>
-                      <p>Confidence: {analysisResult.authenticity_assessment.confidence}</p>
-                      <div className="mt-2">
-                        <p className="font-medium mb-1">Key Factors:</p>
-                        <ul className="list-disc list-inside">
-                          {analysisResult.authenticity_assessment.factors.map((factor, index) => (
-                            <li key={index}>{factor}</li>
-                          ))}
-                        </ul>
+                  {/* AI Detection Details */}
+                  {analysisResult.ai_detection && (
+                    <div className="bg-charcoal-700/50 rounded-lg p-4">
+                      <h4 className="text-white font-semibold mb-2">AI Detection Analysis</h4>
+                      <div className="space-y-1 text-sm text-charcoal-300">
+                        <p>AI Generated Score: {(analysisResult.ai_detection.ai_generated_score * 100).toFixed(1)}%</p>
+                        <p>Human Authored: {(analysisResult.ai_detection.human_authored_confidence * 100).toFixed(1)}%</p>
+                        <p>Method: {analysisResult.ai_detection.detection_method}</p>
                       </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Assessment Details */}
+                  {analysisResult.authenticity_assessment && (
+                    <div className="bg-charcoal-700/50 rounded-lg p-4">
+                      <h4 className="text-white font-semibold mb-2">Assessment Details</h4>
+                      <div className="space-y-1 text-sm text-charcoal-300">
+                        <p>Result: {
+                          analysisResult.authenticity_assessment.score > 70 ? 'Highly Authentic' :
+                          analysisResult.authenticity_assessment.score > 40 ? 'Moderately Authentic' : 
+                          'Low Authenticity'
+                        }</p>
+                        <p>Confidence: {analysisResult.authenticity_assessment.confidence}</p>
+                        <div className="mt-2">
+                          <p className="font-medium mb-1">Key Factors:</p>
+                          <ul className="list-disc list-inside">
+                            {analysisResult.authenticity_assessment.factors.map((factor, index) => (
+                              <li key={index}>{factor}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Security Analysis */}
+                  {analysisResult.security_analysis && (
+                    <div className="bg-charcoal-700/50 rounded-lg p-4">
+                      <h4 className="text-white font-semibold mb-2">Security Analysis</h4>
+                      <div className="space-y-1 text-sm text-charcoal-300">
+                        <p>Encryption: {analysisResult.security_analysis.encryption}</p>
+                        <p>Digital Signatures: {analysisResult.security_analysis.digital_signatures.join(', ')}</p>
+                        <p>Timestamp Validation: {analysisResult.security_analysis.timestamp_validation}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Recommendations */}
+                  {analysisResult.recommendations && (
+                    <div className="bg-charcoal-700/50 rounded-lg p-4">
+                      <h4 className="text-white font-semibold mb-2">Recommendations</h4>
+                      <div className="space-y-2 text-sm text-charcoal-300">
+                        {analysisResult.recommendations.verification_steps && (
+                          <div>
+                            <p className="font-medium">Verification Steps:</p>
+                            <ul className="list-disc list-inside ml-2">
+                              {analysisResult.recommendations.verification_steps.map((step, index) => (
+                                <li key={index}>{step}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {analysisResult.recommendations.security_suggestions && (
+                          <div>
+                            <p className="font-medium">Security Suggestions:</p>
+                            <ul className="list-disc list-inside ml-2">
+                              {analysisResult.recommendations.security_suggestions.map((suggestion, index) => (
+                                <li key={index}>{suggestion}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <p className="text-charcoal-400 text-center">Results will appear here after analysis</p>

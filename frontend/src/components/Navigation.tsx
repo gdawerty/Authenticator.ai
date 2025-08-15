@@ -1,10 +1,20 @@
 import React, { useState } from 'react'
 
-const Navigation: React.FC = () => {
+interface NavigationProps {
+  onShowLogin?: () => void;
+}
+
+const Navigation: React.FC<NavigationProps> = ({ onShowLogin }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen)
+  }
+
+  const handleSignInClick = () => {
+    if (onShowLogin) {
+      onShowLogin();
+    }
   }
 
   return (
@@ -23,7 +33,10 @@ const Navigation: React.FC = () => {
                 <a href="#api" className="text-charcoal-300 hover:text-white transition-colors duration-300 font-medium">API</a>
                 <a href="#pricing" className="text-charcoal-300 hover:text-white transition-colors duration-300 font-medium">Pricing</a>
                 <a href="#documents" className="text-charcoal-300 hover:text-white transition-colors duration-300 font-medium">Documents</a>
-              <button className="bg-white text-black px-6 py-2.5 rounded-lg hover:bg-charcoal-100 transition-all duration-300 font-medium hover-lift">
+              <button 
+                onClick={handleSignInClick}
+                className="bg-white text-black px-6 py-2.5 rounded-lg hover:bg-charcoal-100 transition-all duration-300 font-medium hover-lift"
+              >
                 Sign In
               </button>
             </div>

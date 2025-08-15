@@ -31,16 +31,12 @@ module.exports = {
         }
       },
       animation: {
-        // Dot animations
         'float-dot-1': 'floatDot1 12s ease-in-out infinite',
         'float-dot-2': 'floatDot2 15s ease-in-out infinite',
         'float-dot-3': 'floatDot3 18s ease-in-out infinite',
-        // Shape animations
         'float-circle-1': 'floatCircle1 8s ease-in-out infinite',
-        'float-square-1': 'floatSquare1 5s ease-in-out infinite',
-        'float-circle-2': 'floatCircle2 4s ease-in-out infinite',
-        'float-square-2': 'floatSquare2 6s ease-in-out infinite',
-        // Orb animations
+        'float-circle-2': 'floatCircle2 10s ease-in-out infinite',
+        'float-square-1': 'floatSquare1 9s ease-in-out infinite',
         'pulse-orb': 'pulseOrb 4s ease-in-out infinite'
       },
       keyframes: {
