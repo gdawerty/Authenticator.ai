@@ -4,17 +4,31 @@ class Config:
     # Flask configuration
     DEBUG = True
     HOST = '127.0.0.1'
-    PORT = 8000
+    PORT = 8001
     
-    # CORS configuration
+    # CORS configuration - Allow common development ports
     CORS_RESOURCES = {
         r"/api/*": {
-            "origins": ["http://localhost:5173", "http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:5173", "http://127.0.0.1:3000", "http://127.0.0.1:8080"],
+            "origins": [
+                "http://localhost:3000", "http://localhost:3001", "http://localhost:3002",
+                "http://localhost:5173", "http://localhost:5174", "http://localhost:5175",
+                "http://localhost:8000", "http://localhost:8080", "http://localhost:8081",
+                "http://127.0.0.1:3000", "http://127.0.0.1:3001", "http://127.0.0.1:3002",
+                "http://127.0.0.1:5173", "http://127.0.0.1:5174", "http://127.0.0.1:5175",
+                "http://127.0.0.1:8000", "http://127.0.0.1:8080", "http://127.0.0.1:8081"
+            ],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization", "Accept"]
         },
         r"/*": {
-            "origins": ["http://localhost:5173", "http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:5173", "http://127.0.0.1:3000", "http://127.0.0.1:8080"],
+            "origins": [
+                "http://localhost:3000", "http://localhost:3001", "http://localhost:3002",
+                "http://localhost:5173", "http://localhost:5174", "http://localhost:5175",
+                "http://localhost:8000", "http://localhost:8080", "http://localhost:8081",
+                "http://127.0.0.1:3000", "http://127.0.0.1:3001", "http://127.0.0.1:3002",
+                "http://127.0.0.1:5173", "http://127.0.0.1:5174", "http://127.0.0.1:5175",
+                "http://127.0.0.1:8000", "http://127.0.0.1:8080", "http://127.0.0.1:8081"
+            ],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization", "Accept"]
         }

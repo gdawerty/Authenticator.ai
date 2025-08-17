@@ -24,7 +24,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin }) => {
         ? { email, password, name }
         : { username: email, password };
 
-      const response = await fetch(`http://localhost:8000${endpoint}`, {
+      const response = await fetch(`http://localhost:8001${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -50,7 +50,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin }) => {
   };
 
   const handleOAuthLogin = (provider: 'google' | 'microsoft') => {
-    window.location.href = `http://localhost:8000/oauth/${provider}`;
+    window.location.href = `http://localhost:8001/oauth/${provider}`;
   };
 
   return (

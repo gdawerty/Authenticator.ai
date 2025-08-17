@@ -2,11 +2,14 @@ import React from 'react'
 
 interface HeroSectionProps {
   onShowDemo: () => void
+  onShowSignup?: () => void
 }
 
-const HeroSection: React.FC<HeroSectionProps> = ({ onShowDemo }) => {
-  const showSignup = () => {
-    alert('Sign up functionality would redirect to registration page')
+const HeroSection: React.FC<HeroSectionProps> = ({ onShowDemo, onShowSignup }) => {
+  const handleSignupClick = () => {
+    if (onShowSignup) {
+      onShowSignup();
+    }
   }
 
   const contentTypes = [
@@ -15,6 +18,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onShowDemo }) => {
       icon: (
         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+      )
+    },
+    {
+      name: 'Document',
+      icon: (
+        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
         </svg>
       )
     },
@@ -46,18 +57,18 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onShowDemo }) => {
 
   return (
     <section className="min-h-screen flex items-center justify-center relative pt-20 z-10">
-      <div className="max-w-4xl mx-auto px-8 text-center relative z-10">
-        <div className="space-y-16">
-          <div className="space-y-8">
-            <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight tracking-tight">
-              Detect AI-Generated<br />Content
-            </h1>
-            <p className="text-xl md:text-2xl text-charcoal-300 max-w-2xl mx-auto leading-relaxed font-light">
-              Enterprise-grade detection platform for text, images, audio, and video content with precise confidence scoring.
-            </p>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+      <div className="container mx-auto px-4">
+        <div className="text-center max-w-4xl mx-auto">
+          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+            Check the{' '}
+            <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              Authenticity
+            </span>{' '}
+            of any Content
+          </h1>
+          <p className="text-xl md:text-2xl text-gray-300 mb-8 leading-relaxed">
+            Advanced AI detection technology to verify authenticity and identify AI-generated content across multiple platforms and formats.
+          </p>          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
             <button 
               onClick={onShowDemo}
               className="bg-white text-black px-8 py-4 rounded-lg hover:bg-charcoal-100 transition-all duration-300 font-semibold hover-lift"
@@ -65,7 +76,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onShowDemo }) => {
               Try Demo
             </button>
             <button 
-              onClick={showSignup}
+              onClick={handleSignupClick}
               className="border border-charcoal-600 text-white px-8 py-4 rounded-lg hover:border-white hover:bg-white hover:text-black transition-all duration-300 font-semibold hover-lift"
             >
               Sign Up Free
@@ -73,7 +84,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onShowDemo }) => {
           </div>
           
           {/* Content Type Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-2xl mx-auto pt-8">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-6 max-w-3xl mx-auto pt-8">
             {contentTypes.map((type, index) => (
               <div 
                 key={index}

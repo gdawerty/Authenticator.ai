@@ -13,7 +13,13 @@ def create_app():
     """Create and configure the Flask application"""
     app = Flask(__name__)
     app.config.from_object(Config)
-    CORS(app, resources=app.config['CORS_RESOURCES'])
+    
+    # Simple CORS configuration for development
+    CORS(app, 
+         origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:3000", "http://localhost:8000", "http://localhost:8080"],
+         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+         allow_headers=["Content-Type", "Authorization", "Accept"])
+    
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     
     # Register blueprints

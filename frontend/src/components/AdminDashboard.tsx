@@ -44,12 +44,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
       const token = localStorage.getItem('authToken');
       
       // Fetch users
-      const usersResponse = await fetch('http://localhost:8000/admin/users', {
+      const usersResponse = await fetch('http://localhost:8001/admin/users', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
       // Fetch logs
-      const logsResponse = await fetch('http://localhost:8000/admin/logs', {
+      const logsResponse = await fetch('http://localhost:8001/admin/logs', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 

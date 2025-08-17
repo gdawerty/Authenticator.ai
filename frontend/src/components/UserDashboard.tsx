@@ -36,7 +36,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, onLogout }) => {
 
   const fetchUserLogs = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/user/logs/${user.id}`, {
+      const response = await fetch(`http://localhost:8001/user/logs/${user.id}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }

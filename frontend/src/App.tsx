@@ -15,6 +15,7 @@ import AdminDashboard from './components/AdminDashboard'
 const App: React.FC = () => {
   const [showDemo, setShowDemo] = useState(false)
   const [showLogin, setShowLogin] = useState(false)
+  const [currentView, setCurrentView] = useState<'home' | 'dashboard'>('home')
   const [user, setUser] = useState<any>(null)
   const [apiMessage, setApiMessage] = useState<string>("")
 
@@ -32,6 +33,19 @@ const App: React.FC = () => {
         localStorage.removeItem('user')
       }
     }
+
+    // Check URL hash for navigation
+    const handleHashChange = () => {
+      const hash = window.location.hash.substring(1)
+      if (hash === 'dashboard') {
+        setCurrentView('dashboard')
+      } else {
+        setCurrentView('home')
+      }
+    }
+
+    handleHashChange()
+    window.addEventListener('hashchange', handleHashChange)
 
     // Check for OAuth callback
     const urlParams = new URLSearchParams(window.location.search)
@@ -55,21 +69,26 @@ const App: React.FC = () => {
       .then(res => res.json())
       .then(data => setApiMessage(data.message))
       .catch(err => console.error("API fetch error:", err))
+
+    return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
 
   const handleLogin = (userData: any) => {
     setUser(userData)
     setShowLogin(false)
+    // Stay on the same page - no redirect
   }
 
   const handleLogout = () => {
     localStorage.removeItem('authToken')
     localStorage.removeItem('user')
     setUser(null)
+    setCurrentView('home')
+    window.location.hash = ''
   }
 
-  // If user is logged in, show appropriate dashboard
-  if (user) {
+  // Render dashboard if user is logged in and on dashboard view
+  if (user && currentView === 'dashboard') {
     if (user.role === 'admin') {
       return <AdminDashboard user={user} onLogout={handleLogout} />
     } else {
@@ -77,6 +96,7 @@ const App: React.FC = () => {
     }
   }
 
+  // Always show the main page, but pass user info to Navigation
   return (
     <div className="relative min-h-screen bg-charcoal-950 text-white overflow-x-hidden">
       {/* Background elements (lowest z-index) */}
@@ -84,7 +104,11 @@ const App: React.FC = () => {
       
       {/* Main content container */}
       <div className="relative z-10 flex flex-col min-h-screen">
-        <Navigation onShowLogin={() => setShowLogin(true)} />
+        <Navigation 
+          onShowLogin={() => setShowLogin(true)} 
+          user={user}
+          onLogout={handleLogout}
+        />
         
         <main className="flex-1">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
@@ -94,7 +118,10 @@ const App: React.FC = () => {
                 Backend says: {apiMessage}
               </div>
             )}
-            <HeroSection onShowDemo={() => setShowDemo(true)} />
+            <HeroSection 
+              onShowDemo={() => setShowDemo(true)} 
+              onShowSignup={() => setShowLogin(true)}
+            />
             <FeaturesSection />
             <APISection />
             <PricingSection />

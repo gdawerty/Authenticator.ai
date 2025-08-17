@@ -2,9 +2,11 @@ import React, { useState } from 'react'
 
 interface NavigationProps {
   onShowLogin?: () => void;
+  user?: any;
+  onLogout?: () => void;
 }
 
-const Navigation: React.FC<NavigationProps> = ({ onShowLogin }) => {
+const Navigation: React.FC<NavigationProps> = ({ onShowLogin, user, onLogout }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const toggleMobileMenu = () => {
@@ -14,6 +16,12 @@ const Navigation: React.FC<NavigationProps> = ({ onShowLogin }) => {
   const handleSignInClick = () => {
     if (onShowLogin) {
       onShowLogin();
+    }
+  }
+
+  const handleLogoutClick = () => {
+    if (onLogout) {
+      onLogout();
     }
   }
 
@@ -33,12 +41,28 @@ const Navigation: React.FC<NavigationProps> = ({ onShowLogin }) => {
                 <a href="#api" className="text-charcoal-300 hover:text-white transition-colors duration-300 font-medium">API</a>
                 <a href="#pricing" className="text-charcoal-300 hover:text-white transition-colors duration-300 font-medium">Pricing</a>
                 <a href="#documents" className="text-charcoal-300 hover:text-white transition-colors duration-300 font-medium">Documents</a>
-              <button 
-                onClick={handleSignInClick}
-                className="bg-white text-black px-6 py-2.5 rounded-lg hover:bg-charcoal-100 transition-all duration-300 font-medium hover-lift"
-              >
-                Sign In
-              </button>
+              
+              {user ? (
+                <div className="flex items-center space-x-4">
+                  <a href="#dashboard" className="text-charcoal-300 hover:text-white transition-colors duration-300 font-medium">
+                    Dashboard
+                  </a>
+                  <span className="text-charcoal-300">Welcome, {user.name}</span>
+                  <button 
+                    onClick={handleLogoutClick}
+                    className="bg-charcoal-700 text-white px-4 py-2 rounded-lg hover:bg-charcoal-600 transition-all duration-300 font-medium"
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <button 
+                  onClick={handleSignInClick}
+                  className="bg-white text-black px-6 py-2.5 rounded-lg hover:bg-charcoal-100 transition-all duration-300 font-medium hover-lift"
+                >
+                  Sign In
+                </button>
+              )}
             </div>
             <button 
               className="md:hidden text-white" 
@@ -87,9 +111,31 @@ const Navigation: React.FC<NavigationProps> = ({ onShowLogin }) => {
           >
             Documents
           </a>
-          <button className="bg-white text-black px-8 py-3 rounded-lg hover:bg-charcoal-100 transition-all duration-300 font-medium hover-lift">
-            Sign In
-          </button>
+          
+          {user ? (
+            <div className="flex flex-col items-center space-y-4">
+              <span className="text-charcoal-300">Welcome, {user.name}</span>
+              <button 
+                onClick={() => {
+                  handleLogoutClick();
+                  toggleMobileMenu();
+                }}
+                className="bg-charcoal-700 text-white px-6 py-3 rounded-lg hover:bg-charcoal-600 transition-all duration-300 font-medium"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={() => {
+                handleSignInClick();
+                toggleMobileMenu();
+              }}
+              className="bg-white text-black px-8 py-3 rounded-lg hover:bg-charcoal-100 transition-all duration-300 font-medium hover-lift"
+            >
+              Sign In
+            </button>
+          )}
         </div>
       </div>
     </>

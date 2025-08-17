@@ -116,7 +116,7 @@ const DemoModal: React.FC<DemoModalProps> = ({ onClose }) => {
           console.log(key, value);
         }
 
-        const response = await fetch('http://localhost:8000/api/analyze', {
+        const response = await fetch('http://localhost:8001/api/analyze', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
