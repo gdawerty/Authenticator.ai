@@ -75,3 +75,15 @@ By default, the frontend will be available at:
 ```
 http://localhost:3000
 ```
+# Kill processes on specific ports
+lsof -ti:5173 | xargs kill -9
+lsof -ti:8001 | xargs kill -9
+
+# Kill multiple ports at once
+for port in 3000 5173 5174 8000 8001 8080; do lsof -ti:$port | xargs kill -9 2>/dev/null; done
+
+# Kill all Node.js development processes
+pkill -f "node.*dev\|vite\|webpack"
+
+# Kill all Python development processes  
+pkill -f "python.*app.py\|flask"
