@@ -27,7 +27,11 @@ const Navigation: React.FC<NavigationProps> = ({ onShowLogin, user, onLogout }) 
 
   return (
     <>
+<<<<<<< HEAD
       <nav className="fixed top-0 w-full z-[9999] bg-black/20 backdrop-blur-md border-b border-white/10">
+=======
+      <nav className="fixed top-0 w-full z-50 bg-charcoal-950/75 backdrop-blur-md border-b border-charcoal-800/50">
+>>>>>>> 96cc0de54035511580f48f14a4c833485e0f5b94
         <div className="max-w-6xl mx-auto px-8">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center space-x-3">
