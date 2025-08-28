@@ -27,7 +27,7 @@ const Navigation: React.FC<NavigationProps> = ({ onShowLogin, user, onLogout }) 
 
   return (
     <>
-      <nav className="fixed top-0 w-full z-50 glass-minimal">
+      <nav className="fixed top-0 w-full z-[9999] bg-black/20 backdrop-blur-md border-b border-white/10">
         <div className="max-w-6xl mx-auto px-8">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center space-x-3">
@@ -38,7 +38,7 @@ const Navigation: React.FC<NavigationProps> = ({ onShowLogin, user, onLogout }) 
             </div>
             <div className="hidden md:flex items-center space-x-12">
                 <a href="#features" className="text-charcoal-300 hover:text-white transition-colors duration-300 font-medium">Features</a>
-                <a href="#api" className="text-charcoal-300 hover:text-white transition-colors duration-300 font-medium">API</a>
+                <a href="#api" className="text-charcoal-300 hover:text-white transition-colors duration-300 font-medium">OCR Demo</a>
                 <a href="#pricing" className="text-charcoal-300 hover:text-white transition-colors duration-300 font-medium">Pricing</a>
                 <a href="#documents" className="text-charcoal-300 hover:text-white transition-colors duration-300 font-medium">Documents</a>
               
@@ -95,7 +95,7 @@ const Navigation: React.FC<NavigationProps> = ({ onShowLogin, user, onLogout }) 
             className="text-xl text-charcoal-300 hover:text-white transition-colors duration-300 font-medium"
             onClick={toggleMobileMenu}
           >
-            API
+            OCR Demo
           </a>
           <a 
             href="#pricing" 

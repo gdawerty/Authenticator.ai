@@ -56,10 +56,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onShowDemo, onShowSignup }) =
   ]
 
   return (
-    <section className="min-h-screen flex items-center justify-center relative pt-20 z-10">
+    <section className="min-h-screen flex items-center justify-center relative z-10">
       <div className="container mx-auto px-4">
         <div className="text-center max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+          <h1 className="text-5xl md:text-7xl font-bold text-white mb-12 leading-tight">
             Check the{' '}
             <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
               Authenticity

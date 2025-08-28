@@ -98,7 +98,7 @@ const App: React.FC = () => {
 
   // Always show the main page, but pass user info to Navigation
   return (
-    <div className="relative min-h-screen bg-charcoal-950 text-white overflow-x-hidden">
+    <div className="relative min-h-screen bg-charcoal-950 text-white overflow-x-hidden pt-20">
       {/* Background elements (lowest z-index) */}
       <BackgroundAnimation />
       
