@@ -15,10 +15,38 @@ backend/instance/
 backend/.pytest_cache/
 backend/.mypy_cache/
 backend/.coverage
-backend/.venv/
 backend/venv/
 
-# Database files (if using SQLite locally)
+# --- Virtual Environment ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- Large Data Files ---
+# Model files
+*.pt
+*.pth
+*.bin
+*.safetensors
+artifacts/
+models/*.pt
+models/*.pth
+models/*.bin
+models/*.safetensors
+
+# All data files and directories
+*.csv
+*.parquet
+*.jsonl
+*.json
+data/
+BERT_old/recategorized_data*/
+BERT/data/recategorized_data*/
+BERT_old/hierarchical_artifacts/
+BERT/models/hierarchical_artifacts/
+
+# --- Database files (if using SQLite locally) ---
 *.sqlite3
 *.db
 
@@ -35,3 +63,9 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# --- Temporary files ---
+*.tmp
+*.temp
+tmp_uploads/
+uploads/
