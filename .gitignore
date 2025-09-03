@@ -41,10 +41,14 @@ models/*.safetensors
 *.jsonl
 *.json
 data/
-BERT_old/recategorized_data*/
+BERT_old/
 BERT/data/recategorized_data*/
-BERT_old/hierarchical_artifacts/
 BERT/models/hierarchical_artifacts/
+
+# --- ViT Training ---
+ViT/artifacts/
+ViT/models/
+ViT/data/
 
 # --- Database files (if using SQLite locally) ---
 *.sqlite3
