@@ -1,0 +1,220 @@
+2025-08-29 20:06:37,203 - INFO - 🚀 Using 10 cores for parallel processing
+2025-08-29 20:06:37,203 - INFO - 🚀 Starting Optimized Classification Data Cleaning Pipeline
+2025-08-29 20:06:37,203 - INFO - 🔧 Creating label mapping for global taxonomy...
+2025-08-29 20:06:37,220 - INFO - ✅ Label map created with 10 mappings
+2025-08-29 20:06:37,220 - INFO - 📥 Collecting all data from raw datasets...
+2025-08-29 20:06:37,224 - INFO - 🔍 Found 125 CSV files to process
+2025-08-29 20:06:41,272 - INFO - 📝 Collected 994392 text samples
+2025-08-29 20:06:41,277 - INFO - 🖼️  Collected 140000 image samples
+2025-08-29 20:06:41,310 - INFO - 🧹 Cleaning text data...
+2025-08-29 20:07:31,520 - INFO - ✅ Text cleaning complete. 0 samples remaining
+2025-08-29 20:07:31,607 - INFO - 🔄 Removing text duplicates...
+2025-08-29 20:07:31,607 - INFO - 🖼️  Cleaning image data...
+2025-08-29 20:07:40,196 - INFO - ✅ Image cleaning complete. 0 samples remaining
+2025-08-29 20:07:40,216 - INFO - 🔄 Removing image duplicates...
+2025-08-29 20:07:40,217 - INFO - ✂️  Creating leakage-proof splits...
+2025-08-29 20:07:40,217 - INFO - ✅ Splits created successfully
+2025-08-29 20:07:40,217 - INFO - 💾 Saving processed splits...
+2025-08-29 20:07:40,217 - INFO - 📋 Creating manifest...
+2025-08-29 20:07:40,219 - INFO - 📋 Manifest created: curated/v1/manifest.csv
+2025-08-29 20:07:40,219 - INFO - 🎉 Pipeline completed successfully!
+2025-08-29 20:07:40,220 - INFO - ⏱️  Total time: 0 days 00:01:03.016141
+2025-08-29 20:09:29,713 - INFO - 🚀 Using 10 cores for parallel processing
+2025-08-29 20:09:29,715 - INFO - 🚀 Starting Optimized Classification Data Cleaning Pipeline
+2025-08-29 20:09:29,715 - INFO - 🔧 Creating label mapping for global taxonomy...
+2025-08-29 20:09:29,730 - INFO - ✅ Label map created with 10 mappings
+2025-08-29 20:09:29,730 - INFO - 📥 Collecting all data from raw datasets...
+2025-08-29 20:09:29,734 - INFO - 🔍 Found 125 CSV files to process
+2025-08-29 20:09:33,841 - INFO - 📝 Collected 994392 text samples
+2025-08-29 20:09:33,845 - INFO - 🖼️  Collected 140000 image samples
+2025-08-29 20:09:33,912 - INFO - 🧹 Cleaning text data...
+2025-08-29 20:10:15,325 - INFO - 🔍 Using text column: text_content
+2025-08-29 20:10:15,429 - INFO - 📊 Sample text lengths: count    160000.000000
+mean          6.100000
+std           0.994991
+min           5.000000
+25%           5.000000
+50%           7.000000
+75%           7.000000
+max           7.000000
+Name: text_content, dtype: float64
+2025-08-29 20:10:20,934 - INFO - ✅ Text cleaning complete. 160000 samples remaining
+2025-08-29 20:10:20,966 - INFO - 🔄 Removing text duplicates...
+2025-08-29 20:10:21,036 - INFO - 📊 After exact deduplication: 66400 samples
+2025-08-29 20:10:25,813 - INFO - 📊 After near-duplicate removal: 57496 samples
+2025-08-29 20:10:25,842 - INFO - 🖼️  Cleaning image data...
+2025-08-29 20:10:34,569 - INFO - ✅ Image cleaning complete. 0 samples remaining
+2025-08-29 20:10:34,591 - INFO - 🔄 Removing image duplicates...
+2025-08-29 20:10:34,591 - INFO - ✂️  Creating leakage-proof splits...
+2025-08-29 20:10:38,988 - ERROR - ❌ Pipeline failed: '<' not supported between instances of 'float' and 'str'
+2025-08-29 22:07:00,109 - INFO - 🚀 Using 10 cores for parallel processing
+2025-08-29 22:07:00,109 - INFO - 🚀 Starting Optimized Classification Data Cleaning Pipeline
+2025-08-29 22:07:00,109 - INFO - 🔧 Creating label mapping for global taxonomy...
+2025-08-29 22:07:00,126 - INFO - ✅ Label map created with 10 mappings
+2025-08-29 22:07:00,126 - INFO - 📥 Collecting all data from raw datasets...
+2025-08-29 22:07:00,130 - INFO - 🔍 Found 125 CSV files to process
+2025-08-29 22:07:04,612 - INFO - 📝 Collected 994392 text samples
+2025-08-29 22:07:04,621 - INFO - 🖼️  Collected 140000 image samples
+2025-08-29 22:07:04,662 - INFO - 🧹 Cleaning text data...
+2025-08-29 22:07:53,524 - INFO - 🔍 Using text column: text_content
+2025-08-29 22:07:53,635 - INFO - 📊 Sample text lengths: count    160000.000000
+mean          6.100000
+std           0.994991
+min           5.000000
+25%           5.000000
+50%           7.000000
+75%           7.000000
+max           7.000000
+Name: text_content, dtype: float64
+2025-08-29 22:07:59,888 - INFO - ✅ Text cleaning complete. 160000 samples remaining
+2025-08-29 22:07:59,929 - INFO - 🔄 Removing text duplicates...
+2025-08-29 22:08:00,009 - INFO - 📊 After exact deduplication: 66400 samples
+2025-08-29 22:08:05,084 - INFO - 📊 After near-duplicate removal: 57509 samples
+2025-08-29 22:08:05,128 - INFO - 🖼️  Cleaning image data...
+2025-08-29 22:08:16,981 - INFO - ✅ Image cleaning complete. 0 samples remaining
+2025-08-29 22:08:17,005 - INFO - 🔄 Removing image duplicates...
+2025-08-29 22:08:17,005 - INFO - ✂️  Creating leakage-proof splits...
+2025-08-29 22:08:22,717 - ERROR - ❌ Pipeline failed: Supported target types are: ('binary', 'multiclass'). Got 'multiclass-multioutput' instead.
+2025-08-29 22:10:07,125 - INFO - 🚀 Using 10 cores for parallel processing
+2025-08-29 22:10:07,125 - INFO - 🚀 Starting Optimized Classification Data Cleaning Pipeline
+2025-08-29 22:10:07,125 - INFO - 🔧 Creating label mapping for global taxonomy...
+2025-08-29 22:10:07,142 - INFO - ✅ Label map created with 10 mappings
+2025-08-29 22:10:07,142 - INFO - 📥 Collecting all data from raw datasets...
+2025-08-29 22:10:07,147 - INFO - 🔍 Found 125 CSV files to process
+2025-08-29 22:10:12,083 - INFO - 📝 Collected 994392 text samples
+2025-08-29 22:10:12,088 - INFO - 🖼️  Collected 140000 image samples
+2025-08-29 22:10:12,132 - INFO - 🧹 Cleaning text data...
+2025-08-29 22:10:58,998 - INFO - 🔍 Using text column: text_content
+2025-08-29 22:10:59,104 - INFO - 📊 Sample text lengths: count    160000.000000
+mean          6.100000
+std           0.994991
+min           5.000000
+25%           5.000000
+50%           7.000000
+75%           7.000000
+max           7.000000
+Name: text_content, dtype: float64
+2025-08-29 22:11:05,306 - INFO - ✅ Text cleaning complete. 160000 samples remaining
+2025-08-29 22:11:05,345 - INFO - 🔄 Removing text duplicates...
+2025-08-29 22:11:05,423 - INFO - 📊 After exact deduplication: 66400 samples
+2025-08-29 22:11:10,437 - INFO - 📊 After near-duplicate removal: 57501 samples
+2025-08-29 22:11:10,482 - INFO - 🖼️  Cleaning image data...
+2025-08-29 22:11:20,101 - INFO - ✅ Image cleaning complete. 0 samples remaining
+2025-08-29 22:11:20,127 - INFO - 🔄 Removing image duplicates...
+2025-08-29 22:11:20,127 - INFO - ✂️  Creating leakage-proof splits...
+2025-08-29 22:11:20,143 - INFO - 📊 Text categories: {'Other': 57501}
+2025-08-29 22:11:20,797 - INFO - ✅ Splits created successfully
+2025-08-29 22:11:20,799 - INFO - 💾 Saving processed splits...
+2025-08-29 22:11:20,832 - ERROR - ❌ Pipeline failed: Duplicate column names found: ['text', 'label', 'source_dataset', 'source_path', 'image_id', 'image_path', 'text_content', 'confidence_score', 'is_authentic', 'manipulation_detected', 'question', 'answer', 'document_id', 'document_type', 'tampering_detected', 'manipulation_type', 'document_type', 'cleaned_text', 'category', 'group_id']
+2025-08-29 22:13:49,889 - INFO - 🚀 Using 10 cores for parallel processing
+2025-08-29 22:13:49,890 - INFO - 🚀 Starting Optimized Classification Data Cleaning Pipeline
+2025-08-29 22:13:49,890 - INFO - 🔧 Creating label mapping for global taxonomy...
+2025-08-29 22:13:49,906 - INFO - ✅ Label map created with 10 mappings
+2025-08-29 22:13:49,906 - INFO - 📥 Collecting all data from raw datasets...
+2025-08-29 22:13:49,911 - INFO - 🔍 Found 125 CSV files to process
+2025-08-29 22:13:54,568 - INFO - 📝 Collected 994392 text samples
+2025-08-29 22:13:54,574 - INFO - 🖼️  Collected 140000 image samples
+2025-08-29 22:13:54,620 - INFO - 🧹 Cleaning text data...
+2025-08-29 22:14:50,224 - INFO - 🔍 Using text column: text_content
+2025-08-29 22:14:50,335 - INFO - 📊 Sample text lengths: count    160000.000000
+mean          6.100000
+std           0.994991
+min           5.000000
+25%           5.000000
+50%           7.000000
+75%           7.000000
+max           7.000000
+Name: text_content, dtype: float64
+2025-08-29 22:14:56,589 - INFO - ✅ Text cleaning complete. 160000 samples remaining
+2025-08-29 22:14:56,628 - INFO - 🔄 Removing text duplicates...
+2025-08-29 22:14:56,705 - INFO - 📊 After exact deduplication: 66400 samples
+2025-08-29 22:15:01,860 - INFO - 📊 After near-duplicate removal: 57496 samples
+2025-08-29 22:15:01,895 - INFO - 🖼️  Cleaning image data...
+2025-08-29 22:15:11,627 - INFO - ✅ Image cleaning complete. 0 samples remaining
+2025-08-29 22:15:11,653 - INFO - 🔄 Removing image duplicates...
+2025-08-29 22:15:11,653 - INFO - ✂️  Creating leakage-proof splits...
+2025-08-29 22:15:11,669 - INFO - 📊 Text categories: {'Other': 57496}
+2025-08-29 22:15:12,313 - INFO - ✅ Splits created successfully
+2025-08-29 22:15:12,316 - INFO - 💾 Saving processed splits...
+2025-08-29 22:15:12,316 - INFO - 🧹 Cleaning duplicate columns...
+2025-08-29 22:15:12,316 - INFO - 🔍 Found duplicate columns: ['document_type']
+2025-08-29 22:15:12,322 - INFO - ✅ Removed 1 duplicate columns
+2025-08-29 22:15:12,554 - INFO - 💾 Saved text_train: 51731 samples
+2025-08-29 22:15:12,555 - INFO - 🧹 Cleaning duplicate columns...
+2025-08-29 22:15:12,556 - INFO - 🔍 Found duplicate columns: ['document_type']
+2025-08-29 22:15:12,556 - INFO - ✅ Removed 1 duplicate columns
+2025-08-29 22:15:12,574 - INFO - 💾 Saved text_val: 2882 samples
+2025-08-29 22:15:12,574 - INFO - 🧹 Cleaning duplicate columns...
+2025-08-29 22:15:12,574 - INFO - 🔍 Found duplicate columns: ['document_type']
+2025-08-29 22:15:12,574 - INFO - ✅ Removed 1 duplicate columns
+2025-08-29 22:15:12,591 - INFO - 💾 Saved text_test: 2883 samples
+2025-08-29 22:15:12,592 - INFO - 📋 Creating manifest...
+2025-08-29 22:15:12,594 - INFO - 📋 Manifest created: curated/v1/manifest.csv
+2025-08-29 22:15:12,595 - INFO - 🎉 Pipeline completed successfully!
+2025-08-29 22:15:12,595 - INFO - ⏱️  Total time: 0 days 00:01:22.704854
+2025-08-29 22:15:12,595 - INFO - 
+📊 TEXT DATA SUMMARY:
+2025-08-29 22:15:12,595 - INFO -   train: 51731 samples
+2025-08-29 22:15:12,596 - INFO -     Other: 51731
+2025-08-29 22:15:12,597 - INFO -   val: 2882 samples
+2025-08-29 22:15:12,597 - INFO -     Other: 2882
+2025-08-29 22:15:12,597 - INFO -   test: 2883 samples
+2025-08-29 22:15:12,597 - INFO -     Other: 2883
+2025-08-29 22:38:27,700 - INFO - 🚀 Using 10 cores for parallel processing
+2025-08-29 22:38:27,701 - INFO - 🚀 Starting Optimized Classification Data Cleaning Pipeline
+2025-08-29 22:38:27,701 - INFO - 🔧 Creating label mapping for global taxonomy...
+2025-08-29 22:38:27,717 - INFO - ✅ Label map created with 10 mappings
+2025-08-29 22:38:27,718 - INFO - 📥 Collecting all data from raw datasets...
+2025-08-29 22:38:27,721 - INFO - 🔍 Found 125 CSV files to process
+2025-08-29 22:38:33,866 - INFO - 📝 Collected 994392 text samples
+2025-08-29 22:38:33,917 - INFO - 🖼️  Collected 140000 image samples
+2025-08-29 22:38:33,989 - INFO - 🧹 Cleaning text data...
+2025-08-29 22:39:26,042 - INFO - 🔍 Using text column: text_content
+2025-08-29 22:39:26,159 - INFO - 📊 Sample text lengths: count    160000.000000
+mean          6.100000
+std           0.994991
+min           5.000000
+25%           5.000000
+50%           7.000000
+75%           7.000000
+max           7.000000
+Name: text_content, dtype: float64
+2025-08-29 22:39:34,287 - INFO - ✅ Text cleaning complete. 160000 samples remaining
+2025-08-29 22:39:34,437 - INFO - 🔄 Removing text duplicates...
+2025-08-29 22:39:34,516 - INFO - 📊 After exact deduplication: 66400 samples
+2025-08-29 22:39:40,325 - INFO - 📊 After near-duplicate removal: 57509 samples
+2025-08-29 22:39:40,370 - INFO - 🖼️  Cleaning image data...
+2025-08-29 22:39:50,580 - INFO - ✅ Image cleaning complete. 0 samples remaining
+2025-08-29 22:39:50,607 - INFO - 🔄 Removing image duplicates...
+2025-08-29 22:39:50,607 - INFO - ✂️  Creating leakage-proof splits...
+2025-08-29 22:39:50,625 - INFO - 📊 Text categories: {'Other': 57509}
+2025-08-29 22:39:50,626 - INFO - 📊 Source types: {'real': 57509}
+2025-08-29 22:39:51,304 - INFO - ✅ Splits created successfully
+2025-08-29 22:39:51,307 - INFO - 💾 Saving processed splits...
+2025-08-29 22:39:51,307 - INFO - 🧹 Cleaning duplicate columns...
+2025-08-29 22:39:51,307 - INFO - 🔍 Found duplicate columns: ['document_type']
+2025-08-29 22:39:51,312 - INFO - ✅ Removed 1 duplicate columns
+2025-08-29 22:39:51,555 - INFO - 💾 Saved text_train: 51706 samples
+2025-08-29 22:39:51,557 - INFO - 🧹 Cleaning duplicate columns...
+2025-08-29 22:39:51,558 - INFO - 🔍 Found duplicate columns: ['document_type']
+2025-08-29 22:39:51,558 - INFO - ✅ Removed 1 duplicate columns
+2025-08-29 22:39:51,586 - INFO - 💾 Saved text_val: 2901 samples
+2025-08-29 22:39:51,586 - INFO - 🧹 Cleaning duplicate columns...
+2025-08-29 22:39:51,586 - INFO - 🔍 Found duplicate columns: ['document_type']
+2025-08-29 22:39:51,586 - INFO - ✅ Removed 1 duplicate columns
+2025-08-29 22:39:51,607 - INFO - 💾 Saved text_test: 2902 samples
+2025-08-29 22:39:51,607 - INFO - 📋 Creating manifest...
+2025-08-29 22:39:51,611 - INFO - 📋 Manifest created: curated/v1/manifest.csv
+2025-08-29 22:39:51,612 - INFO - 🎉 Pipeline completed successfully!
+2025-08-29 22:39:51,612 - INFO - ⏱️  Total time: 0 days 00:01:23.910258
+2025-08-29 22:39:51,612 - INFO - 
+📊 TEXT DATA SUMMARY:
+2025-08-29 22:39:51,612 - INFO -   train: 51706 samples
+2025-08-29 22:39:51,614 - INFO -     Other: 51706
+2025-08-29 22:39:51,614 - INFO -     Source types: {'real': 51706}
+2025-08-29 22:39:51,614 - INFO -   val: 2901 samples
+2025-08-29 22:39:51,614 - INFO -     Other: 2901
+2025-08-29 22:39:51,614 - INFO -     Source types: {'real': 2901}
+2025-08-29 22:39:51,614 - INFO -   test: 2902 samples
+2025-08-29 22:39:51,614 - INFO -     Other: 2902
+2025-08-29 22:39:51,614 - INFO -     Source types: {'real': 2902}

@@ -1,0 +1,24 @@
+{
+  "data_type": "text",
+  "generated_at": "2025-08-28T16:19:13.218280",
+  "total_samples": 144,
+  "category_distribution": {
+    "education": 144
+  },
+  "quality_metrics": {
+    "avg_text_length": 174.68055555555554,
+    "min_text_length": 125,
+    "max_text_length": 202,
+    "text_length_std": 20.46270794573427
+  },
+  "pii_detection": {
+    "has_email": 0,
+    "has_phone": 0,
+    "has_ssn": 0,
+    "has_credit_card": 0,
+    "has_address": 0,
+    "has_zip_code": 0,
+    "has_date": 0,
+    "has_name": 144
+  }
+}

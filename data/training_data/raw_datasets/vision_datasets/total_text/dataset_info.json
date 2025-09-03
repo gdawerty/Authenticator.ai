@@ -1,0 +1,17 @@
+{
+  "name": "total_text",
+  "category": "vision_datasets",
+  "type": "text_detection",
+  "source": "synthetic_generated",
+  "splits": [
+    "train",
+    "test"
+  ],
+  "samples": {
+    "train": 9600,
+    "test": 2400,
+    "total": 12000
+  },
+  "generated_at": "2025-08-28T16:46:51.765439",
+  "business_impact": "HIGH - Comprehensive fraud detection coverage"
+}

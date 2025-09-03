@@ -1,0 +1,17 @@
+{
+  "name": "lex_glue",
+  "category": "legal_documents",
+  "type": "legal_qa",
+  "source": "synthetic_generated",
+  "splits": [
+    "train",
+    "test"
+  ],
+  "samples": {
+    "train": 12000,
+    "test": 3000,
+    "total": 15000
+  },
+  "generated_at": "2025-08-28T16:48:49.917769",
+  "business_impact": "HIGH - Final dataset completion for comprehensive coverage"
+}

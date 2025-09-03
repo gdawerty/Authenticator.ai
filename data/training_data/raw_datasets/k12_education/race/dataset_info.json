@@ -1,0 +1,11 @@
+{
+  "name": "race",
+  "config": "all",
+  "splits": [
+    "test",
+    "train",
+    "validation"
+  ],
+  "downloaded_at": "2025-08-28T16:27:06.926565",
+  "source": "huggingface"
+}

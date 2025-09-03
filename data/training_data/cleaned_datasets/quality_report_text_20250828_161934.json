@@ -1,0 +1,24 @@
+{
+  "data_type": "text",
+  "generated_at": "2025-08-28T16:19:34.750849",
+  "total_samples": 125,
+  "category_distribution": {
+    "insurance": 125
+  },
+  "quality_metrics": {
+    "avg_text_length": 263.192,
+    "min_text_length": 114,
+    "max_text_length": 271,
+    "text_length_std": 23.07655422368578
+  },
+  "pii_detection": {
+    "has_email": 0,
+    "has_phone": 0,
+    "has_ssn": 0,
+    "has_credit_card": 0,
+    "has_address": 0,
+    "has_zip_code": 36,
+    "has_date": 0,
+    "has_name": 125
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "docbank",
+  "category": "general_document_classification",
+  "type": "bank_documents",
+  "source": "synthetic_generated",
+  "splits": [
+    "train",
+    "test"
+  ],
+  "samples": {
+    "train": 8000,
+    "test": 2000,
+    "total": 10000
+  },
+  "generated_at": "2025-08-28T16:47:05.308897",
+  "business_impact": "HIGH - Comprehensive fraud detection coverage"
+}

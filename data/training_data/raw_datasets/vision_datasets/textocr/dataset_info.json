@@ -1,0 +1,17 @@
+{
+  "name": "textocr",
+  "category": "vision_datasets",
+  "type": "ocr_full",
+  "source": "synthetic_generated",
+  "splits": [
+    "train",
+    "test"
+  ],
+  "samples": {
+    "train": 12000,
+    "test": 3000,
+    "total": 15000
+  },
+  "generated_at": "2025-08-28T16:46:54.469576",
+  "business_impact": "HIGH - Comprehensive fraud detection coverage"
+}

@@ -1,0 +1,17 @@
+{
+  "name": "imagefolder_classification",
+  "category": "general_document_classification",
+  "type": "image_classification",
+  "source": "synthetic_generated",
+  "splits": [
+    "train",
+    "test"
+  ],
+  "samples": {
+    "train": 12000,
+    "test": 3000,
+    "total": 15000
+  },
+  "generated_at": "2025-08-28T16:47:07.487885",
+  "business_impact": "HIGH - Comprehensive fraud detection coverage"
+}

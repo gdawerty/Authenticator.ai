@@ -1,0 +1,17 @@
+{
+  "name": "manipulation_detection",
+  "category": "forgery_vlm",
+  "type": "image_manipulation",
+  "source": "synthetic_generated",
+  "splits": [
+    "train",
+    "test"
+  ],
+  "samples": {
+    "train": 14400,
+    "test": 3600,
+    "total": 18000
+  },
+  "generated_at": "2025-08-28T16:46:57.822091",
+  "business_impact": "HIGH - Comprehensive fraud detection coverage"
+}

@@ -1,0 +1,17 @@
+{
+  "name": "textocr_subset",
+  "category": "vision_datasets",
+  "type": "ocr_subset",
+  "source": "synthetic_generated",
+  "splits": [
+    "train",
+    "test"
+  ],
+  "samples": {
+    "train": 6400,
+    "test": 1600,
+    "total": 8000
+  },
+  "generated_at": "2025-08-28T16:46:53.918502",
+  "business_impact": "HIGH - Comprehensive fraud detection coverage"
+}

@@ -1,0 +1,16 @@
+{
+  "name": "attendance_logs",
+  "source": "synthetic_generated",
+  "splits": [
+    "train",
+    "test"
+  ],
+  "samples": {
+    "train": 4000,
+    "test": 1000,
+    "total": 5000
+  },
+  "generated_at": "2025-08-28T16:35:39.438683",
+  "business_impact": "CRITICAL - Core fraud detection capability",
+  "note": "Synthetic data generated for immediate business needs"
+}

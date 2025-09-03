@@ -1,0 +1,17 @@
+{
+  "name": "infotabs",
+  "category": "general_document_classification",
+  "type": "tabular_data",
+  "source": "synthetic_generated",
+  "splits": [
+    "train",
+    "test"
+  ],
+  "samples": {
+    "train": 4800,
+    "test": 1200,
+    "total": 6000
+  },
+  "generated_at": "2025-08-28T16:47:08.556114",
+  "business_impact": "HIGH - Comprehensive fraud detection coverage"
+}

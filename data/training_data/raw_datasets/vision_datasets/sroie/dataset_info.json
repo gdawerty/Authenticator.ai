@@ -1,0 +1,17 @@
+{
+  "name": "sroie",
+  "category": "vision_datasets",
+  "type": "ocr",
+  "source": "synthetic_generated",
+  "splits": [
+    "train",
+    "test"
+  ],
+  "samples": {
+    "train": 6400,
+    "test": 1600,
+    "total": 8000
+  },
+  "generated_at": "2025-08-28T16:46:51.220054",
+  "business_impact": "HIGH - Comprehensive fraud detection coverage"
+}

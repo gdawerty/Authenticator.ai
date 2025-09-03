@@ -1,0 +1,16 @@
+{
+  "name": "claim_verification",
+  "source": "synthetic_generated",
+  "splits": [
+    "train",
+    "test"
+  ],
+  "samples": {
+    "train": 24000,
+    "test": 6000,
+    "total": 30000
+  },
+  "generated_at": "2025-08-28T16:35:47.016967",
+  "business_impact": "CRITICAL - Core fraud detection capability",
+  "note": "Synthetic data generated for immediate business needs"
+}

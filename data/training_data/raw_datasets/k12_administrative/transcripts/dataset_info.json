@@ -1,0 +1,17 @@
+{
+  "name": "transcripts",
+  "category": "k12_administrative",
+  "type": "academic_records",
+  "source": "synthetic_generated",
+  "splits": [
+    "train",
+    "test"
+  ],
+  "samples": {
+    "train": 6400,
+    "test": 1600,
+    "total": 8000
+  },
+  "generated_at": "2025-08-28T16:46:58.893645",
+  "business_impact": "HIGH - Comprehensive fraud detection coverage"
+}

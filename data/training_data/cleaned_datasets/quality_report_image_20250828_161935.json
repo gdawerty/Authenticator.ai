@@ -1,0 +1,12 @@
+{
+  "data_type": "image",
+  "generated_at": "2025-08-28T16:19:35.999293",
+  "total_samples": 3,
+  "category_distribution": {
+    "insurance": 3
+  },
+  "quality_metrics": {
+    "image_count": 3,
+    "unique_sources": 0
+  }
+}

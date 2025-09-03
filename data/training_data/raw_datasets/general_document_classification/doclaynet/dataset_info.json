@@ -1,0 +1,17 @@
+{
+  "name": "doclaynet",
+  "category": "general_document_classification",
+  "type": "document_layout",
+  "source": "synthetic_generated",
+  "splits": [
+    "train",
+    "test"
+  ],
+  "samples": {
+    "train": 9600,
+    "test": 2400,
+    "total": 12000
+  },
+  "generated_at": "2025-08-28T16:47:06.391299",
+  "business_impact": "HIGH - Comprehensive fraud detection coverage"
+}

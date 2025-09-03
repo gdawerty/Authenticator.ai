@@ -1,0 +1,17 @@
+{
+  "name": "dbpedia_14",
+  "category": "general_document_classification",
+  "type": "knowledge_classification",
+  "source": "synthetic_generated",
+  "splits": [
+    "train",
+    "test"
+  ],
+  "samples": {
+    "train": 16000,
+    "test": 4000,
+    "total": 20000
+  },
+  "generated_at": "2025-08-28T16:48:49.959167",
+  "business_impact": "HIGH - Final dataset completion for comprehensive coverage"
+}

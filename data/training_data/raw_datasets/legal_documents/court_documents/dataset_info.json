@@ -1,0 +1,16 @@
+{
+  "name": "court_documents",
+  "source": "synthetic_generated",
+  "splits": [
+    "train",
+    "test"
+  ],
+  "samples": {
+    "train": 16000,
+    "test": 4000,
+    "total": 20000
+  },
+  "generated_at": "2025-08-28T16:35:50.286522",
+  "business_impact": "CRITICAL - Core fraud detection capability",
+  "note": "Synthetic data generated for immediate business needs"
+}

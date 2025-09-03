@@ -1,0 +1,17 @@
+{
+  "name": "audeering_forgery",
+  "category": "forgery_vlm",
+  "type": "audio_forgery",
+  "source": "synthetic_generated",
+  "splits": [
+    "train",
+    "test"
+  ],
+  "samples": {
+    "train": 8000,
+    "test": 2000,
+    "total": 10000
+  },
+  "generated_at": "2025-08-28T16:46:56.119657",
+  "business_impact": "HIGH - Comprehensive fraud detection coverage"
+}

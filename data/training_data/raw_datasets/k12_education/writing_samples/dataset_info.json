@@ -1,0 +1,17 @@
+{
+  "name": "writing_samples",
+  "category": "k12_education",
+  "type": "student_writing",
+  "source": "synthetic_generated",
+  "splits": [
+    "train",
+    "test"
+  ],
+  "samples": {
+    "train": 4000,
+    "test": 1000,
+    "total": 5000
+  },
+  "generated_at": "2025-08-28T16:47:02.591859",
+  "business_impact": "HIGH - Comprehensive fraud detection coverage"
+}

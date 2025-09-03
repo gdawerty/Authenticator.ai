@@ -1,0 +1,17 @@
+{
+  "name": "certificates",
+  "category": "k12_administrative",
+  "type": "achievement_certs",
+  "source": "synthetic_generated",
+  "splits": [
+    "train",
+    "test"
+  ],
+  "samples": {
+    "train": 3200,
+    "test": 800,
+    "total": 4000
+  },
+  "generated_at": "2025-08-28T16:47:00.467324",
+  "business_impact": "HIGH - Comprehensive fraud detection coverage"
+}

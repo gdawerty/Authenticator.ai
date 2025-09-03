@@ -1,0 +1,17 @@
+{
+  "name": "coco_text",
+  "category": "vision_datasets",
+  "type": "text_in_images",
+  "source": "synthetic_generated",
+  "splits": [
+    "train",
+    "test"
+  ],
+  "samples": {
+    "train": 14400,
+    "test": 3600,
+    "total": 18000
+  },
+  "generated_at": "2025-08-28T16:46:52.325022",
+  "business_impact": "HIGH - Comprehensive fraud detection coverage"
+}

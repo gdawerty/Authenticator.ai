@@ -40,6 +40,7 @@ pillow==10.2.0
 python-jose==3.3.0
 passlib==1.7.4
 # OCR and Image Processing Dependencies
+openai==1.58.0
 pytesseract==0.3.10
 opencv-python==4.9.0.80
 PyMuPDF==1.23.26
