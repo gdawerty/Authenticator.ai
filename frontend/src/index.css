@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Animation Keyframes */
+@keyframes float-dot-1 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); opacity: 0.8; }
+  25% { transform: translate(30px, -40px) scale(1.2); opacity: 1; }
+  50% { transform: translate(-20px, -80px) scale(0.8); opacity: 0.6; }
+  75% { transform: translate(50px, -30px) scale(1.1); opacity: 0.9; }
+}
+
+@keyframes float-dot-2 {
+  0%, 100% { transform: translate(0px, 0px) rotate(0deg); opacity: 0.7; }
+  20% { transform: translate(-40px, 30px) rotate(72deg); opacity: 1; }
+  40% { transform: translate(20px, -50px) rotate(144deg); opacity: 0.5; }
+  60% { transform: translate(-30px, -20px) rotate(216deg); opacity: 0.8; }
+  80% { transform: translate(40px, 40px) rotate(288deg); opacity: 0.9; }
+}
+
+@keyframes float-dot-3 {
+  0%, 100% { transform: translate(0px, 0px); opacity: 0.6; }
+  33% { transform: translate(60px, -30px); opacity: 1; }
+  66% { transform: translate(-40px, -60px); opacity: 0.4; }
+}
+
+@keyframes float-circle-1 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); opacity: 0.6; }
+  25% { transform: translate(40px, -30px) scale(1.1); opacity: 0.8; }
+  50% { transform: translate(-20px, -60px) scale(0.9); opacity: 0.4; }
+  75% { transform: translate(30px, -40px) scale(1.2); opacity: 0.7; }
+}
+
+@keyframes float-square-1 {
+  0%, 100% { transform: rotate(45deg) translate(0px, 0px) scale(1); opacity: 0.5; }
+  33% { transform: rotate(135deg) translate(35px, -25px) scale(1.3); opacity: 0.8; }
+  66% { transform: rotate(225deg) translate(-30px, -50px) scale(0.8); opacity: 0.3; }
+}
+
+@keyframes pulse-orb {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.05); }
+}
+
+/* Animation Classes */
+.animate-float-dot-1 {
+  animation: float-dot-1 12s ease-in-out infinite;
+}
+
+.animate-float-dot-2 {
+  animation: float-dot-2 15s ease-in-out infinite;
+}
+
+.animate-float-dot-3 {
+  animation: float-dot-3 18s ease-in-out infinite;
+}
+
+.animate-float-circle-1 {
+  animation: float-circle-1 8s ease-in-out infinite;
+}
+
+.animate-float-square-1 {
+  animation: float-square-1 5s ease-in-out infinite;
+}
+
+.animate-pulse-orb {
+  animation: pulse-orb 4s ease-in-out infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}

@@ -1,0 +1,15 @@
+This is a test document for clone detection.
+
+This document contains some sample text that can be used to test the fingerprinting and clone detection capabilities of the FC-5 unified clone search API.
+
+The document includes multiple sentences and paragraphs to generate meaningful text fingerprints including shingles and SimHash values.
+
+Key features being tested:
+- Text fingerprint generation
+- SimHash calculation
+- Shingle extraction (3-5 grams)
+- Clone detection across multiple modalities
+
+This test will help verify that the clone search API meets the FC-5 acceptance criteria for returning fused top-k results with proper distance scoring.
+
+Additional content to make this slightly different but still similar enough to be detected as a potential clone.
