@@ -613,3 +613,6 @@ class ParsingService:
 
 # Import required for image processing
 import io
+
+# Global service instance
+parsing_service = ParsingService()

@@ -12,6 +12,10 @@ from backend.routes.parsing_routes import parsing_bp
 from backend.routes.openai_classification_routes import openai_classification_bp
 from backend.routes.authenticity_routes import authenticity_bp
 from backend.routes.clone_search_routes import clone_search_bp
+from backend.routes.stage3_clone_detection_routes import api as stage3_api
+from backend.routes.ai_clone_detection_routes import ai_clone_routes
+from backend.routes.cryptographic_validation_routes import crypto_validation_routes
+from backend.routes.documents_routes import documents_bp
 
 def create_app():
     """Create and configure the Flask application"""
@@ -34,6 +38,20 @@ def create_app():
     app.register_blueprint(openai_classification_bp)
     app.register_blueprint(authenticity_bp)
     app.register_blueprint(clone_search_bp, url_prefix='/api/clone')
+    
+    # Register AI clone detection routes
+    app.register_blueprint(ai_clone_routes, url_prefix='/api')
+    
+    # Register cryptographic validation routes
+    app.register_blueprint(crypto_validation_routes, url_prefix='/api')
+    
+    # Register documents routes
+    app.register_blueprint(documents_bp, url_prefix='/api/documents')
+    
+    # Register the enhanced Stage 3 clone detection API
+    from flask_restx import Api
+    api = Api(app, doc='/api/stage3/doc/', version='1.0', title='Stage 3 Clone Detection API')
+    api.add_namespace(stage3_api, path='/api/stage3')
     
     return app
 

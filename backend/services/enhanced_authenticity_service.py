@@ -147,51 +147,118 @@ class EnhancedAuthenticityService:
         text_content: str = None
     ) -> Dict[str, Any]:
         """
-        Stage 3: Fingerprint & Clone Detection
-        Text: shingles+SimHash+dense embeddings
-        Images: pHash/dHash+CLIP/SigLIP
-        Docs: template hashes
+        Stage 3: Enhanced Clone Detection Layer — SimHash & MinHash
+        
+        Goal: Detect near-duplicate or semantically similar documents.
+        
+        How it works:
+        - Generate SimHash for each document to capture approximate similarity in bit space
+        - Use MinHash (with shingles) for set-similarity detection — ideal for textual overlap
+        - Compare against a local hash index of known documents, web corpora, or previously verified data
+        
+        Output:
+        - A similarity score (0–1) indicating degree of duplication
+        - Metadata (matched document IDs, similarity ratio)
         """
+        from services.enhanced_clone_detection_service import enhanced_clone_detection_service
 
-        fingerprint_results = {
-            'stage': 'fingerprint_clone_detection',
+        stage_3_results = {
+            'stage': 'stage_3_clone_detection',
             'timestamp': datetime.now().isoformat(),
-            'text_fingerprint': None,
-            'image_fingerprint': None,
-            'document_fingerprint': None,
-            'clone_detection_results': {},
-            'duplicate_risk_score': 0.0
+            'enhanced_clone_detection': None,
+            'legacy_fingerprints': None,
+            'clone_detection_summary': {},
+            'duplicate_risk_score': 0.0,
+            'processing_method': 'enhanced_simhash_minhash'
         }
 
         try:
-            # Text fingerprinting
+            # Primary: Enhanced SimHash & MinHash clone detection
             if text_content and len(text_content.strip()) > 10:
-                fingerprint_results['text_fingerprint'] = self.fingerprint_service.generate_text_fingerprint(
-                    text_content, file_id, filename
+                stage_3_results['enhanced_clone_detection'] = enhanced_clone_detection_service.process_document(
+                    text=text_content,
+                    file_id=file_id,
+                    filename=filename,
+                    document_type=file_type
                 )
+                
+                # Extract key metrics for pipeline
+                enhanced_results = stage_3_results['enhanced_clone_detection']
+                similarity_score = enhanced_results.get('similarity_score', 0.0)
+                duplicates_found = enhanced_results.get('duplicates_found', 0)
+                
+                stage_3_results['duplicate_risk_score'] = similarity_score
+                stage_3_results['clone_detection_summary'] = {
+                    'max_similarity_score': similarity_score,
+                    'total_duplicates_found': duplicates_found,
+                    'high_similarity_matches': len([
+                        m for m in enhanced_results.get('similarity_matches', []) 
+                        if m.get('similarity_score', 0) > 0.9
+                    ]),
+                    'exact_matches': len([
+                        m for m in enhanced_results.get('similarity_matches', []) 
+                        if m.get('similarity_score', 0) >= 0.95
+                    ]),
+                    'detection_methods_used': list(set([
+                        m.get('match_method', 'unknown') 
+                        for m in enhanced_results.get('similarity_matches', [])
+                    ])),
+                    'processing_time_ms': enhanced_results.get('metadata', {}).get('processing_time_ms', 0)
+                }
 
-            # Image fingerprinting
-            if file_type.lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff']:
-                with open(file_path, 'rb') as f:
-                    image_bytes = f.read()
-                fingerprint_results['image_fingerprint'] = self.fingerprint_service.generate_image_fingerprint(
-                    image_bytes, file_id, filename
-                )
+            # Fallback: Legacy fingerprinting for images and additional coverage
+            legacy_results = {
+                'stage': 'legacy_fingerprint_clone_detection',
+                'timestamp': datetime.now().isoformat(),
+                'text_fingerprint': None,
+                'image_fingerprint': None,
+                'document_fingerprint': None,
+                'clone_detection_results': {},
+                'duplicate_risk_score': 0.0
+            }
 
-            # Document template fingerprinting
-            if text_content:
-                fingerprint_results['document_fingerprint'] = self.fingerprint_service.generate_document_fingerprint(
-                    text_content, file_id, filename, file_type
-                )
+            try:
+                # Text fingerprinting (legacy method for comparison)
+                if text_content and len(text_content.strip()) > 10:
+                    legacy_results['text_fingerprint'] = self.fingerprint_service.generate_text_fingerprint(
+                        text_content, file_id, filename
+                    )
 
-            # Analyze clone detection results
-            fingerprint_results['clone_detection_results'] = self._analyze_clone_detection_results(fingerprint_results)
-            fingerprint_results['duplicate_risk_score'] = self._calculate_duplicate_risk_score(fingerprint_results)
+                # Image fingerprinting (still needed for visual similarity)
+                if file_type.lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff']:
+                    with open(file_path, 'rb') as f:
+                        image_bytes = f.read()
+                    legacy_results['image_fingerprint'] = self.fingerprint_service.generate_image_fingerprint(
+                        image_bytes, file_id, filename
+                    )
+
+                # Document template fingerprinting (for layout similarity)
+                if text_content:
+                    legacy_results['document_fingerprint'] = self.fingerprint_service.generate_document_fingerprint(
+                        text_content, file_id, filename, file_type
+                    )
+
+                # Analyze legacy clone detection results
+                legacy_results['clone_detection_results'] = self._analyze_clone_detection_results(legacy_results)
+                legacy_results['duplicate_risk_score'] = self._calculate_duplicate_risk_score(legacy_results)
+
+                stage_3_results['legacy_fingerprints'] = legacy_results
+                
+                # Combine risk scores (use maximum)
+                enhanced_risk = stage_3_results.get('duplicate_risk_score', 0.0)
+                legacy_risk = legacy_results.get('duplicate_risk_score', 0.0)
+                stage_3_results['duplicate_risk_score'] = max(enhanced_risk, legacy_risk)
+
+            except Exception as legacy_error:
+                print(f"Legacy fingerprinting failed: {legacy_error}")
+                stage_3_results['legacy_fingerprints'] = {'error': str(legacy_error)}
 
         except Exception as e:
-            fingerprint_results['error'] = str(e)
+            print(f"Enhanced clone detection failed: {e}")
+            stage_3_results['enhanced_clone_detection'] = {'error': str(e)}
+            stage_3_results['duplicate_risk_score'] = 0.0
 
-        return fingerprint_results
+        return stage_3_results
 
     def stage_4_integrity_forensics(self, file_path: str, file_type: str, text_content: str = None) -> Dict[str, Any]:
         """
