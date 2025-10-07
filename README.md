@@ -30,6 +30,7 @@ pip install -r requirements.txt
 
 ## 3️⃣ Run the Backend Server
 ```bash
+python minimal_app.py
 python app.py
 ```
 You should see:
