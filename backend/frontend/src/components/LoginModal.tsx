@@ -19,10 +19,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin }) => {
     setError('');
 
     try {
-      const endpoint = isSignup ? '/auth/signup' : '/auth/login';
+      const endpoint = isSignup ? '/signup' : '/login';
       const body = isSignup 
         ? { email, password, name }
-        : { email, password };
+        : { username: email, password };
 
       const response = await fetch(`http://localhost:8001${endpoint}`, {
         method: 'POST',
@@ -34,8 +34,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin }) => {
 
       if (response.ok) {
         const data = await response.json();
-        localStorage.setItem('authToken', data.access_token);
-        localStorage.setItem('refreshToken', data.refresh_token);
+        localStorage.setItem('authToken', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         onLogin(data.user);
         onClose();
@@ -51,7 +50,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin }) => {
   };
 
   const handleOAuthLogin = (provider: 'google' | 'microsoft') => {
-    window.location.href = `http://localhost:8001/auth/oauth/${provider}`;
+    window.location.href = `http://localhost:8001/oauth/${provider}`;
   };
 
   return (
@@ -195,7 +194,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin }) => {
         {!isSignup && (
           <div className="mt-4 text-center">
             <p className="text-charcoal-400 text-sm">
-              Demo credentials: test@example.com / testpass123
+              Demo credentials: admin@authenticator.ai / admin123
             </p>
           </div>
         )}
