@@ -8,8 +8,23 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8001', // Unified Flask backend with SQL Server
+        changeOrigin: true,
+        secure: false
+      },
+      '/auth': {
+        target: 'http://127.0.0.1:8001', // Auth routes
+        changeOrigin: true,
+        secure: false
+      },
       '/docs': {
-        target: 'http://127.0.0.1:8000', // Flask backend
+        target: 'http://127.0.0.1:8001', // Documentation
+        changeOrigin: true,
+        secure: false
+      },
+      '/health': {
+        target: 'http://127.0.0.1:8001', // Health check
         changeOrigin: true,
         secure: false
       }

@@ -39,6 +39,15 @@ models/*.pth
 models/*.bin
 models/*.safetensors
 
+# Model cache directories
+model_cache/
+**/model_cache/
+**/models--*/
+fast-detect-gpt/
+**/fast-detect-gpt/
+fast-detect-gpt/exp_*/results/
+**/results/*.json
+
 # All data files and directories
 *.csv
 *.parquet
@@ -48,6 +57,48 @@ data/
 # Keep essential config files but exclude data JSON files
 *.json
 !package.json
+!tsconfig*.json
+!eslint.config.js
+
+# --- Database Files ---
+*.db
+*.sqlite
+*.sqlite3
+backend/DB/
+backend/data/
+data/
+
+# --- Docker Files to Exclude ---
+backend/node_modules/
+backend/frontend/node_modules/
+backend/frontend/dist/
+
+# --- PyCache and Build Files ---
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.pytest_cache/
+.mypy_cache/
+.coverage
+
+# --- IDE and OS Files ---
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- Logs ---
+*.log
+logs/
+backend/logs/
+
+# --- Environment Files ---
+.env
+.env.local
+.env.production
 !package-lock.json
 !tsconfig*.json
 !vite.config.*
@@ -75,3 +126,4 @@ Thumbs.db
 *.temp
 tmp_uploads/
 uploads/
+.env

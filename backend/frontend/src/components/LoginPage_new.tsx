@@ -40,7 +40,7 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
         ? { email: formData.email, password: formData.password, name: formData.name }
         : { email: formData.email, password: formData.password };
 
-      const response = await fetch(`http://localhost:8001${endpoint}`, {
+      const response = await fetch(`http://localhost:5000${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -49,7 +49,6 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
       });
 
       const data = await response.json();
-      console.log('Login response:', data);
 
       if (response.ok) {
         localStorage.setItem('access_token', data.access_token);
@@ -59,7 +58,6 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
         setError(data.error || 'Authentication failed');
       }
     } catch (error) {
-      console.error('Login error:', error);
       setError('Network error. Please try again.');
     } finally {
       setIsLoading(false);
@@ -67,7 +65,7 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
   };
 
   const handleOAuthLogin = (provider: string) => {
-    window.location.href = `http://localhost:8001/auth/oauth/${provider}`;
+    window.location.href = `http://localhost:5000/auth/oauth/${provider}`;
   };
 
   return (

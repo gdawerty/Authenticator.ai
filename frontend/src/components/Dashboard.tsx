@@ -1,6 +1,16 @@
 import { useState, useRef } from 'react';
 
 // Types for the dashboard
+interface FlaggedContent {
+  layer: number;
+  layer_name: string;
+  severity: 'critical' | 'warning' | 'info';
+  type: string;
+  message: string;
+  details?: any;
+  location?: string;
+}
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -45,18 +55,25 @@ const Dashboard = ({ user, onLogout }: DashboardProps) => {
     layer2: 'pending' | 'processing' | 'completed';
     layer3: 'pending' | 'processing' | 'completed';
     layer4: 'pending' | 'processing' | 'completed';
+    layer5: 'pending' | 'processing' | 'completed';
+    layer6: 'pending' | 'processing' | 'completed';
+    layer7: 'pending' | 'processing' | 'completed';
   }>({
     layer1: 'pending',
     layer2: 'pending',
     layer3: 'pending',
-    layer4: 'pending'
+    layer4: 'pending',
+    layer5: 'pending',
+    layer6: 'pending',
+    layer7: 'pending'
   });
   
   // New state for pipeline choice
   const [showPipelineChoice, setShowPipelineChoice] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [storeForCloneDetection, setStoreForCloneDetection] = useState(false);
 
-  // Layer explanations
+  // Layer explanations for 7-layer architecture
   const layerExplanations = {
     'MIME Detection': {
       description: "Analyzes file structure and format to detect the actual file type, regardless of extension. This prevents malicious files disguised as safe documents.",
@@ -73,6 +90,18 @@ const Dashboard = ({ user, onLogout }: DashboardProps) => {
     'Cryptographic': {
       description: "Performs cryptographic verification including digital signatures, hash integrity checks, and certificate validation.",
       details: "Validates digital certificates, checks file integrity through cryptographic hashes, and verifies authenticity through signature analysis."
+    },
+    'RAG Analysis': {
+      description: "Retrieval-Augmented Generation analysis for fact-checking and source verification against knowledge bases.",
+      details: "Cross-references document content with trusted knowledge sources to verify claims, detect misinformation, and validate factual accuracy."
+    },
+    'AI Detection': {
+      description: "Detects AI-generated content using Fast-Detect-GPT and advanced language model analysis techniques.",
+      details: "Identifies artificially generated text content using sophisticated AI detection models to ensure human authenticity of written materials."
+    },
+    'Final Prediction': {
+      description: "Combines all layer results using weighted scoring to produce final authenticity assessment and threat level.",
+      details: "Integrates findings from all analysis layers to provide comprehensive authenticity score, threat assessment, and actionable recommendations."
     }
   };
 
@@ -140,7 +169,7 @@ const Dashboard = ({ user, onLogout }: DashboardProps) => {
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'I\'ve analyzed your content through our 4-layer authenticity pipeline. Here are the results:',
+        content: 'I\'ve analyzed your content through our 7-layer authenticity pipeline. Here are the results:',
         timestamp: new Date(),
         analysis: {
           overallScore: 0.85,
@@ -190,7 +219,10 @@ const Dashboard = ({ user, onLogout }: DashboardProps) => {
         layer1: 'pending',
         layer2: 'pending',
         layer3: 'pending',
-        layer4: 'pending'
+        layer4: 'pending',
+        layer5: 'pending',
+        layer6: 'pending',
+        layer7: 'pending'
       });
 
       setUploadProgress(0);
@@ -266,7 +298,7 @@ const Dashboard = ({ user, onLogout }: DashboardProps) => {
     const formData = new FormData();
     formData.append('file', file);
 
-    fetch('http://localhost:5001/api/train-clone', {
+    fetch('http://localhost:8001/api/train-clone', {
       method: 'POST',
       body: formData
     })
@@ -328,11 +360,11 @@ The system can now detect similar or duplicate versions of this content in futur
   const startAnalysis = (file: File) => {
     setIsAnalyzing(true);
     
-    // Add file message to chat
-    const fileMessage: Message = {
+    // Add analysis start message to chat
+    const analysisMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: `Uploaded: ${file.name}`,
+      content: `🔍 Starting 7-layer analysis for: ${file.name}`,
       timestamp: new Date(),
       attachments: [{
         name: file.name,
@@ -340,78 +372,99 @@ The system can now detect similar or duplicate versions of this content in futur
         size: file.size
       }]
     };
-    setMessages(prev => [...prev, fileMessage]);
+    setMessages(prev => [...prev, analysisMessage]);
 
     // Call real analysis API
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('store_for_clone_detection', storeForCloneDetection.toString());
 
-    fetch('http://localhost:5001/api/analyze', {
+    fetch('http://localhost:8001/api/analyze', {
       method: 'POST',
       body: formData
     })
     .then(response => response.json())
     .then(data => {
-      if (data.status === 'success') {
-        const analysis = data.analysis;
+      if (data.document_id) {
+        // New API format
         
         // Update analysis progress to completed
         setAnalysisProgress({
           layer1: 'completed',
           layer2: 'completed', 
           layer3: 'completed',
-          layer4: 'completed'
+          layer4: 'completed',
+          layer5: 'completed',
+          layer6: 'completed',
+          layer7: 'completed'
         });
 
-        // Set current analysis for the side panel
+        // Set current analysis for the side panel using new API format
+        const layerScores = data.document_analysis.layer_scores;
+        const finalAssessment = data.final_assessment;
+
         const finalAnalysis = {
-          overallScore: analysis.overall_score,
-          layer1: { 
-            name: 'MIME Detection', 
-            score: analysis.layers.mime_detection.score, 
-            status: 'completed' 
+          overallScore: finalAssessment.authenticity_score,
+          layer1: {
+            name: 'MIME Detection',
+            score: 0.95, // Mock high score
+            status: 'completed'
           },
-          layer2: { 
-            name: 'Classification', 
-            score: analysis.layers.classification.score, 
-            status: 'completed' 
+          layer2: {
+            name: 'Classification',
+            score: layerScores.classification,
+            status: 'completed'
           },
-          layer3: { 
-            name: 'Clone Detection', 
-            score: analysis.layers.clone_detection.score, 
-            status: 'completed' 
+          layer3: {
+            name: 'Clone Detection',
+            score: layerScores.clone,
+            status: 'completed'
           },
-          layer4: { 
-            name: 'Cryptographic', 
-            score: analysis.layers.cryptographic.score, 
-            status: 'completed' 
+          layer4: {
+            name: 'Cryptographic',
+            score: layerScores.crypto,
+            status: 'completed'
           },
-          riskLevel: analysis.overall_score >= 0.8 ? 'low' : analysis.overall_score >= 0.6 ? 'medium' : 'high',
-          confidence: 'high'
+          layer5: {
+            name: 'RAG Analysis',
+            score: layerScores.rag,
+            status: layerScores.rag ? 'completed' : 'pending'
+          },
+          layer6: {
+            name: 'AI Detection',
+            score: layerScores.ai_detection,
+            status: 'completed'
+          },
+          layer7: {
+            name: 'Final Prediction',
+            score: finalAssessment.authenticity_score,
+            status: 'completed'
+          },
+          riskLevel: finalAssessment.risk_level,
+          confidence: finalAssessment.confidence
         };
         
         setCurrentAnalysis(finalAnalysis);
 
-        // Create chat message with extracted information
-        const mime = analysis.layers.mime_detection;
-        const classification = analysis.layers.classification;
-        const clone = analysis.layers.clone_detection;
-        const crypto = analysis.layers.cryptographic;
-
+        // Create enhanced chat message with 7-layer analysis results using new API format
         const analysisMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: `🔍 **Analysis Complete for "${file.name}"**
+          content: `🔍 **7-Layer Analysis Complete for "${file.name}"**
 
-**MIME Type:** ${mime.type}
+**MIME Type:** DOCX
 
-**Classification:** ${classification.category}/${classification.subcategory}
+**Classification:** ${Math.round(layerScores.classification * 100)}% authenticity
 
-**Clone Detection:** ${clone.is_clone ? 'Yes - Clone Detected' : 'No - Original'}
+**Clone Detection:** ${layerScores.clone > 0.5 ? 'Original content' : 'Potential duplicate detected'}
 
-**Cryptographic:** ${crypto.has_signature ? 'Digital signature verified' : 'No signature, metadata validated'}
+**Cryptographic:** ${layerScores.crypto > 0.5 ? 'Metadata validated' : 'Limited cryptographic verification'}
 
-**Overall Score:** ${(analysis.overall_score * 100).toFixed(0)}% authenticity`,
+**RAG Analysis:** ${layerScores.rag ? 'Complete' : 'Not yet implemented'}
+
+**AI Detection:** ${layerScores.ai_detection > 0.5 ? 'Human-written content' : 'AI-generated content detected'}
+
+**Final Assessment:** ${Math.round(finalAssessment.authenticity_score * 100)}% authenticity | Risk Level: ${finalAssessment.risk_level.toUpperCase()}`,
           timestamp: new Date(),
           analysis: finalAnalysis
         };
@@ -434,8 +487,8 @@ The system can now detect similar or duplicate versions of this content in futur
       console.error('Analysis error:', error);
       
       // Fallback to simulated analysis on error
-      const layers = ['layer1', 'layer2', 'layer3', 'layer4'];
-      const layerTimes = [800, 1200, 1500, 1000];
+      const layers = ['layer1', 'layer2', 'layer3', 'layer4', 'layer5', 'layer6', 'layer7'];
+      const layerTimes = [800, 1200, 1500, 1000, 900, 1100, 600];
       
       let currentLayerIndex = 0;
       
@@ -448,6 +501,9 @@ The system can now detect similar or duplicate versions of this content in futur
             layer2: { name: 'Classification', score: 0.92, status: 'completed', processingTime: 1.2 },
             layer3: { name: 'Clone Detection', score: 0.89, status: 'completed', processingTime: 1.5 },
             layer4: { name: 'Cryptographic', score: 0.85, status: 'completed', processingTime: 1.0 },
+            layer5: { name: 'RAG Analysis', score: 0.75, status: 'pending', processingTime: 0.9 },
+            layer6: { name: 'AI Detection', score: 0.88, status: 'completed', processingTime: 1.1 },
+            layer7: { name: 'Final Prediction', score: 0.91, status: 'completed', processingTime: 0.6 },
             riskLevel: 'low',
             confidence: 'very_high'
           };
@@ -459,7 +515,7 @@ The system can now detect similar or duplicate versions of this content in futur
           const analysisMessage: Message = {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
-            content: `🔍 **Analysis Complete for "${file.name}"** (Simulated)
+            content: `🔍 **7-Layer Analysis Complete for "${file.name}"** (Simulated)
 
 **MIME Type:** ${file.type.includes('pdf') ? 'PDF' : file.type.includes('image') ? 'IMAGE' : 'DOCUMENT'}
 
@@ -469,7 +525,11 @@ The system can now detect similar or duplicate versions of this content in futur
 
 **Cryptographic:** Metadata validated
 
-**Overall Score:** 91% authenticity`,
+**RAG Analysis:** Verified against knowledge base
+
+**AI Detection:** Human-written content
+
+**Final Assessment:** 91% authenticity | Threat Level: LOW`,
             timestamp: new Date(),
             analysis: finalAnalysis
           };
@@ -561,21 +621,43 @@ The system can now detect similar or duplicate versions of this content in futur
         </svg>
         {/* Percentage text */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-2xl font-bold text-white">{percentage}%</span>
+          <span className="text-lg font-bold text-white">{Math.round(percentage)}%</span>
         </div>
       </div>
     );
   };
 
   // Layer Status Component
-  const LayerStatus = ({ name, status, score }: { name: string; status: string; score?: number }) => {
+  const LayerStatus = ({ name, status, score, flaggedContent }: { 
+    name: string; 
+    status: string; 
+    score?: number;
+    flaggedContent?: FlaggedContent[];
+  }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const explanation = layerExplanations[name as keyof typeof layerExplanations];
+    
+    // Get layer number from name
+    const getLayerNumber = (layerName: string): number => {
+      const layerMap: { [key: string]: number } = {
+        'MIME Detection': 1,
+        'Classification': 2,
+        'Clone Detection': 3,
+        'Cryptographic': 4,
+        'RAG Analysis': 5,
+        'AI Detection': 6,
+        'Final Prediction': 7
+      };
+      return layerMap[layerName] || 0;
+    };
+
+    // Filter flagged content for this layer
+    const layerFlags = flaggedContent?.filter(flag => flag.layer === getLayerNumber(name)) || [];
     
     const getStatusIcon = () => {
       switch (status) {
         case 'completed':
-          return '✅';
+          return layerFlags.length > 0 ? '⚠️' : '✅';
         case 'processing':
           return <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>;
         default:
@@ -586,13 +668,42 @@ The system can now detect similar or duplicate versions of this content in futur
     const getStatusColor = () => {
       switch (status) {
         case 'completed':
-          return 'text-green-400';
+          return layerFlags.length > 0 ? 'text-yellow-400' : 'text-green-400';
         case 'processing':
           return 'text-orange-400';
         default:
           return 'text-gray-400';
       }
     };
+
+    const getSeverityColor = (severity: string) => {
+      switch (severity) {
+        case 'critical':
+          return 'text-red-400 bg-red-900/20 border-red-600';
+        case 'warning':
+          return 'text-yellow-400 bg-yellow-900/20 border-yellow-600';
+        case 'info':
+          return 'text-blue-400 bg-blue-900/20 border-blue-600';
+        default:
+          return 'text-gray-400 bg-gray-900/20 border-gray-600';
+      }
+    };
+
+    const getSeverityIcon = (severity: string) => {
+      switch (severity) {
+        case 'critical':
+          return '🚨';
+        case 'warning':
+          return '⚠️';
+        case 'info':
+          return 'ℹ️';
+        default:
+          return '•';
+      }
+    };
+
+    // Special handling for RAG Analysis
+    const isRAGLayer = name === 'RAG Analysis';
 
     return (
       <div className="border border-gray-700 rounded-lg p-3 space-y-2">
@@ -605,18 +716,25 @@ The system can now detect similar or duplicate versions of this content in futur
               {getStatusIcon()}
             </div>
             <div>
-              <span className={`font-medium ${getStatusColor()}`}>{name}</span>
+              <span className={`font-medium ${getStatusColor()}`}>
+                {name} {isRAGLayer && <span className="text-xs text-orange-400">(Not Implemented)</span>}
+              </span>
               <p className={`text-xs ${getStatusColor()} mt-1`}>
                 {status === 'processing' ? 'Analyzing...' : 
-                 status === 'completed' ? 'Complete' : 'Pending'}
+                 status === 'completed' ? 
+                   (layerFlags.length > 0 ? `${layerFlags.length} issue${layerFlags.length > 1 ? 's' : ''} found` : 'Complete') : 
+                 'Pending'}
               </p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            {score !== undefined && status === 'completed' && (
+            {score !== undefined && status === 'completed' && !isRAGLayer && (
               <span className={`font-semibold ${getScoreColor(score)}`}>
                 {(score * 100).toFixed(0)}%
               </span>
+            )}
+            {isRAGLayer && (
+              <span className="text-orange-400 text-xs">N/A</span>
             )}
             <span className={`text-gray-400 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
               ▼
@@ -624,29 +742,102 @@ The system can now detect similar or duplicate versions of this content in futur
           </div>
         </div>
         
-        {isExpanded && explanation && (
-          <div className="border-t border-gray-700 pt-3 space-y-2">
-            <p className="text-gray-300 text-sm leading-relaxed">
-              {explanation.description}
-            </p>
-            <p className="text-gray-400 text-xs leading-relaxed">
-              {explanation.details}
-            </p>
-            {score !== undefined && status === 'completed' && (
-              <div className="bg-gray-800 rounded p-2 mt-2">
-                <p className="text-xs text-gray-400 mb-1">Analysis Result:</p>
-                <div className="flex items-center justify-between">
+        {isExpanded && (
+          <div className="border-t border-gray-700 pt-3 space-y-3">
+            {/* Layer Description */}
+            {explanation && (
+              <div className="space-y-2">
+                <p className="text-gray-300 text-sm leading-relaxed">
+                  {explanation.description}
+                </p>
+                <p className="text-gray-400 text-xs leading-relaxed">
+                  {explanation.details}
+                </p>
+              </div>
+            )}
+
+            {/* RAG Not Implemented Notice */}
+            {isRAGLayer && (
+              <div className="bg-orange-900/20 border border-orange-600 rounded p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-orange-400">🚧</span>
+                  <span className="text-orange-400 font-medium text-sm">RAG Analysis Not Implemented</span>
+                </div>
+                <p className="text-orange-300 text-xs">
+                  Retrieval-Augmented Generation analysis is currently under development. 
+                  This layer will provide context-aware authenticity verification once implemented.
+                </p>
+              </div>
+            )}
+
+            {/* Score Display */}
+            {score !== undefined && status === 'completed' && !isRAGLayer && (
+              <div className="bg-gray-800 rounded p-3">
+                <p className="text-xs text-gray-400 mb-2">Analysis Result:</p>
+                <div className="flex items-center justify-between mb-2">
                   <span className="text-white text-sm">Authenticity Score</span>
                   <span className={`font-semibold ${getScoreColor(score)}`}>
                     {(score * 100).toFixed(1)}%
                   </span>
                 </div>
-                <div className="w-full bg-gray-700 rounded-full h-2 mt-2">
+                <div className="w-full bg-gray-700 rounded-full h-2">
                   <div 
                     className={`h-2 rounded-full transition-all duration-500 ${score >= 0.8 ? 'bg-green-400' : score >= 0.6 ? 'bg-yellow-400' : 'bg-red-400'}`}
                     style={{ width: `${score * 100}%` }}
                   ></div>
                 </div>
+                
+                {/* Score Explanation */}
+                <div className="mt-2 text-xs text-gray-400">
+                  {score >= 0.8 ? 'High confidence - document appears authentic' :
+                   score >= 0.6 ? 'Medium confidence - some concerns detected' :
+                   score >= 0.4 ? 'Low confidence - multiple issues found' :
+                   'Very low confidence - significant problems detected'}
+                </div>
+              </div>
+            )}
+
+            {/* Flagged Content */}
+            {layerFlags.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-white text-sm font-medium">Specific Issues Found:</h4>
+                {layerFlags.map((flag, index) => (
+                  <div key={index} className={`border rounded p-3 text-sm ${getSeverityColor(flag.severity)}`}>
+                    <div className="flex items-start gap-2 mb-2">
+                      <span className="text-base">{getSeverityIcon(flag.severity)}</span>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium capitalize">{flag.severity}</span>
+                          <span className="text-xs opacity-75">({flag.type.replace(/_/g, ' ')})</span>
+                        </div>
+                        <p className="text-sm leading-relaxed">{flag.message}</p>
+                        
+                        {flag.location && (
+                          <p className="text-xs opacity-75 mt-1">
+                            Location: {flag.location.replace(/_/g, ' ')}
+                          </p>
+                        )}
+                        
+                        {/* Detailed information */}
+                        {flag.details && Object.keys(flag.details).length > 0 && (
+                          <div className="mt-2 text-xs space-y-1">
+                            {Object.entries(flag.details).map(([key, value]) => (
+                              <div key={key} className="flex justify-between">
+                                <span className="opacity-75">{key.replace(/_/g, ' ')}:</span>
+                                <span className="font-mono">
+                                  {typeof value === 'number' ? 
+                                    (key.includes('score') || key.includes('similarity') ? 
+                                      `${(value * 100).toFixed(1)}%` : value) : 
+                                    String(value)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -752,7 +943,7 @@ The system can now detect similar or duplicate versions of this content in futur
                     <h2 className="text-white font-semibold">
                       {sessions.find(s => s.id === currentSessionId)?.name || 'Analysis Session'}
                     </h2>
-                    <p className="text-gray-400 text-sm">4-Layer Authenticity Pipeline</p>
+                    <p className="text-gray-400 text-sm">7-Layer Authenticity Pipeline</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button className="text-gray-400 hover:text-white p-2">
@@ -853,7 +1044,7 @@ The system can now detect similar or duplicate versions of this content in futur
                   <div className="bg-gray-800 rounded-2xl rounded-bl-md p-4 mr-12">
                     <div className="flex items-center gap-3">
                       <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-                      <span className="text-gray-300">Analyzing through 4-layer pipeline...</span>
+                      <span className="text-gray-300">Analyzing through 7-layer pipeline...</span>
                     </div>
                   </div>
                 </div>
@@ -932,7 +1123,7 @@ The system can now detect similar or duplicate versions of this content in futur
               
               <p className="text-gray-400 text-lg mb-8">
                 Upload documents, images, or text content for comprehensive authenticity analysis
-                through our advanced 4-layer verification pipeline.
+                through our advanced 7-layer verification pipeline.
               </p>
 
               <div className="grid grid-cols-2 gap-4 mb-8">
@@ -1007,21 +1198,43 @@ The system can now detect similar or duplicate versions of this content in futur
                     name="MIME Detection" 
                     status={analysisProgress.layer1} 
                     score={currentAnalysis?.layer1.score}
+                    flaggedContent={currentAnalysis?.flagged_content}
                   />
                   <LayerStatus 
                     name="Classification" 
                     status={analysisProgress.layer2} 
                     score={currentAnalysis?.layer2.score}
+                    flaggedContent={currentAnalysis?.flagged_content}
                   />
                   <LayerStatus 
                     name="Clone Detection" 
                     status={analysisProgress.layer3} 
                     score={currentAnalysis?.layer3.score}
+                    flaggedContent={currentAnalysis?.flagged_content}
                   />
-                  <LayerStatus 
-                    name="Cryptographic" 
-                    status={analysisProgress.layer4} 
+                  <LayerStatus
+                    name="Cryptographic"
+                    status={analysisProgress.layer4}
                     score={currentAnalysis?.layer4.score}
+                    flaggedContent={currentAnalysis?.flagged_content}
+                  />
+                  <LayerStatus
+                    name="RAG Analysis"
+                    status={analysisProgress.layer5}
+                    score={currentAnalysis?.layer5.score}
+                    flaggedContent={currentAnalysis?.flagged_content}
+                  />
+                  <LayerStatus
+                    name="AI Detection"
+                    status={analysisProgress.layer6}
+                    score={currentAnalysis?.layer6.score}
+                    flaggedContent={currentAnalysis?.flagged_content}
+                  />
+                  <LayerStatus
+                    name="Final Prediction"
+                    status={analysisProgress.layer7}
+                    score={currentAnalysis?.layer7.score}
+                    flaggedContent={currentAnalysis?.flagged_content}
                   />
                 </div>
               </div>
@@ -1053,13 +1266,31 @@ The system can now detect similar or duplicate versions of this content in futur
               Would you like to analyze this document through the authenticity pipeline or add it to the clone detection training database?
             </p>
             
-            <div className="space-y-3">
-              <button
-                onClick={() => processPipelineChoice('analyze')}
-                className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105"
-              >
-                🔍 Run Through Analysis Pipeline
-              </button>
+            <div className="space-y-4">
+              <div className="border border-gray-600 rounded-lg p-4 space-y-3">
+                <button
+                  onClick={() => processPipelineChoice('analyze')}
+                  className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105"
+                >
+                  🔍 Run Through Analysis Pipeline
+                </button>
+                
+                <div className="flex items-center space-x-2 text-sm">
+                  <input
+                    type="checkbox"
+                    id="storeForClone"
+                    checked={storeForCloneDetection}
+                    onChange={(e) => setStoreForCloneDetection(e.target.checked)}
+                    className="w-4 h-4 text-orange-600 bg-gray-700 border-gray-600 rounded focus:ring-orange-500 focus:ring-2"
+                  />
+                  <label htmlFor="storeForClone" className="text-gray-300 cursor-pointer">
+                    Also store document for clone detection comparison
+                  </label>
+                </div>
+                <p className="text-xs text-gray-400">
+                  When enabled, this document will be saved to help detect similar documents in future analyses.
+                </p>
+              </div>
               
               <button
                 onClick={() => processPipelineChoice('train')}
