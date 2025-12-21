@@ -117,3 +117,40 @@ export interface FileUpload {
   status: 'pending' | 'uploading' | 'processing' | 'completed' | 'failed';
   error?: string;
 }
+
+// RAG types
+export interface RagClassificationResult {
+  classification: string;
+  confidence: number;
+  similarityScore?: number;
+  details?: {
+    human_probability: number;
+    ai_probability: number;
+    patterns_detected: string[];
+  };
+}
+
+export interface RagAuthenticityResult {
+  isAuthentic: boolean;
+  confidence: number;
+  riskLevel: 'low' | 'medium' | 'high';
+  details?: {
+    authenticity_score: number;
+    risk_factors: string[];
+    validation_checks: Record<string, boolean>;
+  };
+}
+
+export interface RagSimilarContent {
+  content: string;
+  similarity: number;
+  metadata?: Record<string, any>;
+  source?: string;
+}
+
+export interface RagStats {
+  totalDocuments: number;
+  avgProcessingTime: number;
+  accuracyRate: number;
+  lastUpdated: string;
+}

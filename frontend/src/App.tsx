@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import Homepage from './components/Homepage';
 import LoginPage from './components/LoginPage';
 import Dashboard from './components/Dashboard';
+import DemoRequestForm from './components/DemoRequestForm';
 import './App.css';
 
 interface User {
@@ -13,6 +15,9 @@ interface User {
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showLogin, setShowLogin] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [showDemoRequest, setShowDemoRequest] = useState(false);
 
   useEffect(() => {
     // Check for existing auth token
@@ -23,6 +28,7 @@ function App() {
       if (userData) {
         try {
           setUser(JSON.parse(userData));
+          setShowDashboard(true);
         } catch (error) {
           localStorage.removeItem('access_token');
           localStorage.removeItem('user_data');
@@ -40,9 +46,11 @@ function App() {
       email: userData.email,
       avatar: userData.avatar_url
     });
-    
+
     // Store user data for persistence
     localStorage.setItem('user_data', JSON.stringify(userData));
+    setShowLogin(false);
+    setShowDashboard(true);
   };
 
   const handleLogout = () => {
@@ -50,6 +58,20 @@ function App() {
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user_data');
     setUser(null);
+    setShowDashboard(false);
+  };
+
+  const handleRequestDemo = () => {
+    setShowDemoRequest(true);
+  };
+
+  const handleShowLogin = () => {
+    setShowLogin(true);
+  };
+
+  const handleBackToHome = () => {
+    setShowLogin(false);
+    setShowDemoRequest(false);
   };
 
   if (isLoading) {
@@ -65,14 +87,28 @@ function App() {
     );
   }
 
-  return (
-    <div className="App">
-      {user ? (
+  if (showDashboard && user) {
+    return (
+      <div className="App">
         <Dashboard user={user} onLogout={handleLogout} />
-      ) : (
-        <LoginPage onLogin={handleLogin} />
-      )}
-    </div>
+      </div>
+    );
+  }
+
+  if (showDemoRequest) {
+    return <DemoRequestForm onBack={handleBackToHome} />;
+  }
+
+  if (showLogin) {
+    return (
+      <div className="App">
+        <LoginPage onLogin={handleLogin} onBack={handleBackToHome} />
+      </div>
+    );
+  }
+
+  return (
+    <Homepage onRequestDemo={handleRequestDemo} onLogin={handleShowLogin} />
   );
 }
 

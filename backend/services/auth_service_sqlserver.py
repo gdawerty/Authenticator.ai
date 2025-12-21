@@ -266,19 +266,25 @@ class AuthenticationService:
         
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            auth_header = None
-            
-            # Try to get token from request
             from flask import request
+            # Primary: Authorization: Bearer <token>
             auth_header = request.headers.get('Authorization')
-            
-            if not auth_header or not auth_header.startswith('Bearer '):
+            token = None
+            if auth_header and auth_header.startswith('Bearer '):
+                token = auth_header.split(' ')[1]
+            # Fallbacks for dev/proxy environments
+            if not token:
+                token = request.headers.get('X-Auth-Token')
+            if not token:
+                token = request.args.get('token')
+            if not token:
+                token = request.cookies.get('token')
+
+            if not token:
                 return {
                     'error': 'Authentication required',
                     'code': 'AUTH_REQUIRED'
                 }, 401
-            
-            token = auth_header.split(' ')[1]
             verification_result = self.verify_jwt_token(token)
             
             if not verification_result['success']:
@@ -297,21 +303,35 @@ class AuthenticationService:
     def optional_authentication(self, f):
         """Decorator for optional authentication (doesn't fail if no token)"""
         from functools import wraps
-        
+
         @wraps(f)
         def decorated_function(*args, **kwargs):
             from flask import request
             auth_header = request.headers.get('Authorization')
-            
+            token = None
+
+            # Check multiple auth sources
             if auth_header and auth_header.startswith('Bearer '):
                 token = auth_header.split(' ')[1]
+            elif request.headers.get('X-Auth-Token'):
+                token = request.headers.get('X-Auth-Token')
+            elif request.args.get('token'):
+                token = request.args.get('token')
+
+            # Set default anonymous user
+            g.current_user = {
+                'user_id': 'anonymous',
+                'email': 'anonymous@example.com',
+                'username': 'anonymous'
+            }
+
+            if token:
                 verification_result = self.verify_jwt_token(token)
-                
                 if verification_result['success']:
                     g.current_user = verification_result['payload']
-            
+
             return f(*args, **kwargs)
-        
+
         return decorated_function
 
 # Global authentication service instance

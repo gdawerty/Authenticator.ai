@@ -4,7 +4,7 @@ class Config:
     # Flask configuration
     DEBUG = True
     HOST = '127.0.0.1'
-    PORT = 8001
+    PORT = 8000
     
     # CORS configuration - Allow common development ports
     CORS_RESOURCES = {
@@ -43,3 +43,8 @@ class Config:
     API_VERSION = "1.0"
     API_PREFIX = "/api"
     API_DOC = "/docs"
+    
+    # Groq Cloud Configuration
+    GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+    GROQ_MODEL = os.getenv('GROQ_MODEL', 'mixtral-8x7b-32768')
+    GROQ_BASE_URL = "https://api.groq.com/openai/v1"

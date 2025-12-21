@@ -1,5 +1,5 @@
 import axios, { AxiosResponse } from 'axios';
-import { 
+import type { 
   AuthResponse, 
   LoginCredentials, 
   RegisterData, 
@@ -9,10 +9,14 @@ import {
   ChatSession,
   ChatMessage,
   ApiResponse,
-  PaginatedResponse
+  PaginatedResponse,
+  RagClassificationResult,
+  RagAuthenticityResult,
+  RagSimilarContent,
+  RagStats
 } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -195,6 +199,43 @@ export const analysisApi = {
     const response: AxiosResponse<ApiResponse<PaginatedResponse<AuthenticityAnalysis>>> = await api.get(
       `/analysis/history?page=${page}&limit=${limit}`
     );
+    return response.data.data!;
+  },
+};
+
+// RAG API
+export const ragApi = {
+  classifyContent: async (content: string, options?: { threshold?: number; include_similarity?: boolean }): Promise<RagClassificationResult> => {
+    const response: AxiosResponse<ApiResponse<RagClassificationResult>> = await api.post('/api/rag/classify', {
+      content,
+      ...options,
+    });
+    return response.data.data!;
+  },
+
+  analyzeAuthenticity: async (content: string, options?: { threshold?: number; include_details?: boolean }): Promise<RagAuthenticityResult> => {
+    const response: AxiosResponse<ApiResponse<RagAuthenticityResult>> = await api.post('/api/rag/analyze_authenticity', {
+      content,
+      ...options,
+    });
+    return response.data.data!;
+  },
+
+  findSimilarContent: async (content: string, options?: { limit?: number; threshold?: number }): Promise<RagSimilarContent[]> => {
+    const response: AxiosResponse<ApiResponse<RagSimilarContent[]>> = await api.post('/api/rag/find_similar', {
+      content,
+      ...options,
+    });
+    return response.data.data!;
+  },
+
+  getStats: async (): Promise<RagStats> => {
+    const response: AxiosResponse<ApiResponse<RagStats>> = await api.get('/api/rag/stats');
+    return response.data.data!;
+  },
+
+  healthCheck: async (): Promise<{ status: string; timestamp: string }> => {
+    const response: AxiosResponse<ApiResponse<{ status: string; timestamp: string }>> = await api.get('/api/rag/health');
     return response.data.data!;
   },
 };

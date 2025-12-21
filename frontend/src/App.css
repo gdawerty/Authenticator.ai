@@ -1,8 +1,61 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Generic layout helpers to avoid panel overlap */
+.app-shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* allow children to shrink properly */
+}
+
+.chat-main-container {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  min-width: 0;
+}
+
+.chat-scroll-region {
+  flex: 1;
+  overflow-y: auto;
+  min-width: 0;
+  padding-bottom: 1rem;
+}
+
+.side-analysis-panel {
+  width: 380px;
+  flex-shrink: 0; /* prevent shrinking over content */
+  border-left: 1px solid #1f2937;
+  background: #111827;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 1280px) {
+  .side-analysis-panel {
+    width: 340px;
+  }
+}
+
+@media (max-width: 1024px) {
+  #root {
+    flex-direction: column; /* stack for smaller screens */
+  }
+  .side-analysis-panel {
+    width: 100%;
+    order: 3;
+    border-left: none;
+    border-top: 1px solid #1f2937;
+  }
+  .chat-main-container {
+    flex-direction: column;
+  }
 }
 
 .logo {

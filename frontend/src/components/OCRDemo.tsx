@@ -131,7 +131,7 @@ const OCRDemo: React.FC = () => {
     formData.append('enable_self_training', 'true')
 
     try {
-      const response = await fetch('http://localhost:8001/api/analyze', {
+      const response = await fetch('http://localhost:8000/api/analyze/unified', {
         method: 'POST',
         body: formData,
       })

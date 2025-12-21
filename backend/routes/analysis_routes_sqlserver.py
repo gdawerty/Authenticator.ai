@@ -27,12 +27,12 @@ def get_file_hash(content):
     return hashlib.sha256(content.encode('utf-8')).hexdigest()
 
 @analysis_bp.route("/analyze", methods=["POST"])
-@auth_service.require_authentication
+@auth_service.optional_authentication
 def analyze_document():
     """Analyze uploaded document and store in SQL Server"""
     try:
         user_context = auth_service.get_current_user_context()
-        user_id = user_context.get('user_id')
+        user_id = user_context.get('user_id', 'anonymous')
         
         if 'file' not in request.files:
             return jsonify({
@@ -268,11 +268,11 @@ def get_database_stats():
         }), 500
 
 @analysis_bp.route("/train-clone", methods=["POST"])
-@auth_service.require_authentication
+@auth_service.optional_authentication
 def train_clone_detection():
     """Add document to clone detection training set"""
     try:
-        user_context = auth_service.get_current_user_context()
+        user_context = auth_service.get_current_user_context() or {}
         
         if 'file' not in request.files:
             return jsonify({

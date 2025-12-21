@@ -28,6 +28,7 @@ SQLAlchemy==2.0.35
 alembic==1.14.0
 # psycopg2-binary==2.9.9  # Not compatible with Python 3.13
 psycopg==3.2.1  # Python 3.13 compatible PostgreSQL adapter
+pyodbc==5.0.1  # SQL Server database adapter
 redis==5.0.1
 celery==5.3.6
 flower==2.0.1
@@ -42,6 +43,7 @@ python-jose==3.3.0
 passlib==1.7.4
 # OCR and Image Processing Dependencies
 openai==1.58.0
+groq==0.11.0  # Groq AI API client for fallback classification
 pytesseract==0.3.10
 opencv-python==4.9.0.80
 # PyMuPDF==1.23.26  # Commented out due to SSL issues
@@ -62,7 +64,7 @@ textdistance==4.6.0
 # Core Sprint 3 Dependencies (Essential Only)
 # Dense Embeddings & Vector Search
 sentence-transformers==3.0.1
-# faiss-cpu==1.8.0  # Can be added later
+faiss-cpu==1.12.0  # Required for RAG vector search
 # annoy==1.17.3     # Can be added later
 
 # Image Processing & Computer Vision
@@ -79,7 +81,7 @@ psutil==6.0.0
 pycryptodome==3.20.0
 
 # NLP & Entity Extraction
-# spacy==3.7.2      # Large download, can be added later
+spacy==3.7.2      # Required for RAG text processing
 dateparser==1.2.0
 phonenumbers==8.13.47
 
@@ -92,3 +94,4 @@ scipy==1.14.1
 # Utilities
 tqdm==4.66.5
 colorama==0.4.6
+bcrypt==4.1.2

@@ -50,7 +50,7 @@ const APISection: React.FC = () => {
     formData.append('vision_analysis', 'true')
 
     try {
-      const response = await fetch('http://localhost:8001/api/parse', {
+      const response = await fetch('http://localhost:8000/api/analyze/unified', {
         method: 'POST',
         body: formData,
       })
@@ -60,7 +60,7 @@ const APISection: React.FC = () => {
     } catch (error) {
       setResult({
         success: false,
-        error: `Connection error: Make sure backend is running on port 8001`
+        error: `Connection error: Make sure backend is running on port 8000`
       })
     } finally {
       setLoading(false)
@@ -106,7 +106,7 @@ const APISection: React.FC = () => {
             </div>
             
             <a 
-              href="http://localhost:8001/api/" 
+                href="http://localhost:8000/api/" 
               target="_blank" 
               rel="noopener noreferrer"
               className="inline-block bg-white text-black px-8 py-4 rounded-lg hover:bg-charcoal-100 transition-all duration-300 font-semibold hover-lift"

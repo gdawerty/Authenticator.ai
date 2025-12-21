@@ -309,16 +309,18 @@ def analyze_document(file_id, analysis_type, user_id=None):
                         'clone_detection': comprehensive_result.get('clone_detection', {}),
                         'integrity_analysis': comprehensive_result.get('integrity_analysis', {}),
                         'qr_attestation': comprehensive_result.get('qr_attestation', {}),
-                        'bert_classification': {
-                            'category': ml_classification.get('category', 'Unknown'),
-                            'subcategory': ml_classification.get('subcategory', 'General'),
-                            'confidence': ml_classification.get('confidence', 0.0)
-                        } if ml_classification else None,
-                        'vit_classification': comprehensive_result.get('vit_classification', {}),
-                        'raw_text': extracted_text,
-                        'file_type': file_ext,
-                        'original_filename': filename
-                    }
+                         'bert_classification': {
+                             'category': ml_classification.get('category', 'Unknown'),
+                             'subcategory': ml_classification.get('subcategory', 'General'),
+                             'confidence': ml_classification.get('confidence', 0.0)
+                         } if ml_classification else None,
+                         'vit_classification': comprehensive_result.get('vit_classification', {}),
+                         'raw_text': extracted_text if extracted_text else '',
+                         'text_extracted': bool(extracted_text and len(extracted_text.strip()) > 0),
+                         'text_length': len(extracted_text) if extracted_text else 0,
+                         'file_type': file_ext,
+                         'original_filename': filename
+                     }
                 else:
                     # Fallback comprehensive analysis
                     confidence = ml_classification['confidence'] if ml_classification else 0.5
@@ -334,7 +336,8 @@ def analyze_document(file_id, analysis_type, user_id=None):
                         },
                         'confidence': confidence,
                         'ml_analysis': ml_classification,
-                        'fallback_used': True
+                        'fallback_used': True,
+                        'raw_text': extracted_text
                     }
                 
             elif analysis_type == 'metadata':
@@ -364,8 +367,10 @@ def analyze_document(file_id, analysis_type, user_id=None):
             else:
                 return None
                 
-            # Add extracted text to all results
-            result['raw_text'] = extracted_text
+            # Add extracted text to all results (CRITICAL for frontend display)
+            result['raw_text'] = extracted_text if extracted_text else ''
+            result['text_extracted'] = bool(extracted_text and len(extracted_text.strip()) > 0)
+            result['text_length'] = len(extracted_text) if extracted_text else 0
             
             return result
     

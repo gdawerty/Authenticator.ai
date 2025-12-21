@@ -42,10 +42,8 @@ try:
 except ImportError:
     ai_clone_routes = None
 
-try:
-    from backend.routes.openai_classification_routes import openai_classification_bp
-except ImportError:
-    openai_classification_bp = None
+# OpenAI classification removed - using RAG-based classification instead
+openai_classification_bp = None
 
 try:
     from backend.routes.clone_search_routes import clone_search_bp
@@ -58,6 +56,16 @@ try:
     STAGE3_AVAILABLE = True
 except ImportError:
     STAGE3_AVAILABLE = False
+
+try:
+    from backend.routes.rag_routes import rag_bp
+except ImportError:
+    rag_bp = None
+
+try:
+    from backend.routes.explanation_routes import explanation_bp
+except ImportError:
+    explanation_bp = None
 
 def create_app():
     """Create and configure Flask application"""
@@ -97,12 +105,19 @@ def create_app():
     
     if ai_clone_routes:
         app.register_blueprint(ai_clone_routes, url_prefix='/api/ai-clone')
-    
-    if openai_classification_bp:
-        app.register_blueprint(openai_classification_bp, url_prefix='/api/openai')
-    
+
+    # OpenAI classification removed - using RAG-based classification instead
+
     if clone_search_bp:
         app.register_blueprint(clone_search_bp, url_prefix='/api/clone')
+    
+    # Register RAG routes if available
+    if rag_bp:
+        app.register_blueprint(rag_bp, url_prefix='/api/rag')
+    
+    # Register explanation routes if available
+    if explanation_bp:
+        app.register_blueprint(explanation_bp, url_prefix='/api/explanations')
     
     # Register Stage 3 API if available
     if STAGE3_AVAILABLE:
@@ -159,7 +174,7 @@ def create_app():
         """Generate a test token for development"""
         try:
             data = request.get_json() or {}
-            
+
             from backend.services.auth_service_sqlserver import auth_service
             
             # Create a test user payload
@@ -221,6 +236,21 @@ if __name__ == '__main__':
         print(f"📊 Database stats: {stats}")
     except Exception as e:
         print(f"❌ SQL Server connectivity test failed: {e}")
+    
+    # Load Layer 2 models (BERT and ViT)
+    try:
+        from backend.services.bert_classification_service import get_bert_classifier
+        bert_classifier = get_bert_classifier()
+        print("✅ BERT loaded successfully")
+    except Exception as e:
+        print(f"⚠️ BERT loading warning: {e}")
+    
+    try:
+        from backend.services.vit_classification_service import ViTClassifier
+        vit_classifier = ViTClassifier()
+        print("✅ ViT loaded successfully")
+    except Exception as e:
+        print(f"⚠️ ViT loading warning: {e}")
     
     # Run the application
     app.run(

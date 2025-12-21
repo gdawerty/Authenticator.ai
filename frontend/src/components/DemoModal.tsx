@@ -119,92 +119,19 @@ const DemoModal: React.FC<DemoModalProps> = ({ onClose }) => {
       setLoadingStage(0);
 
       if (contentType === 'document' && documentFile) {
-        // Stage 1: Upload
+        // Unified document analysis flow
         setLoadingStage(1);
         const formData = new FormData();
         formData.append('file', documentFile);
-        await new Promise(r => setTimeout(r, 800));
-
-        // Stage 2: Extract text for prediction model
-        setLoadingStage(2);
-        console.log('Extracting text for prediction model...');
-        
-        // First, parse the file to extract text
-        const parseFormData = new FormData();
-        parseFormData.append('file', documentFile);
-        parseFormData.append('enhance_ocr', 'true');
-        parseFormData.append('detect_qr', 'true');
-        parseFormData.append('vision_analysis', 'true');
-
-        const parseResponse = await fetch('http://localhost:8001/api/parse', {
-          method: 'POST',
-          body: parseFormData,
-          mode: 'cors',
-        });
-
-        let extractedText = '';
-        if (parseResponse.ok) {
-          const parseResult = await parseResponse.json();
-          extractedText = parseResult.raw_text || '';
-          console.log('Text extracted for prediction:', extractedText.substring(0, 200) + '...');
-        }
-
-        // Stage 3: Call prediction model first
-        setLoadingStage(3);
-        console.log('Calling prediction model...');
-        
-        let predictionResult = null;
-        if (extractedText && extractedText.trim().length > 10) {
-          try {
-            // Use BERT classification endpoint
-            const predictionResponse = await fetch('http://localhost:8001/api/classify/text', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-              },
-              body: JSON.stringify({
-                text: extractedText,
-                return_top_predictions: true
-              }),
-              mode: 'cors',
-            });
-
-            if (predictionResponse.ok) {
-              predictionResult = await predictionResponse.json();
-              console.log('Prediction model result:', predictionResult);
-            } else {
-              console.warn('Prediction model failed, continuing with analysis...');
-            }
-          } catch (predictionError) {
-            console.warn('Prediction model error:', predictionError);
-          }
-        }
-
-        // Stage 4: Call main analyze endpoint
-        setLoadingStage(4);
-        console.log('Sending request to analyze endpoint...');
-        // Add analysis_type and Sprint 3 features to formData
         formData.append('analysis_type', 'comprehensive');
-        formData.append('enable_fingerprinting', 'true');
-        formData.append('enable_clone_detection', 'true');
-        formData.append('enable_integrity_forensics', 'true');
-        formData.append('enable_self_training', 'true');
-        formData.append('return_document_pages', 'true');
         
-        // Log what we're sending
-        console.log('Sending FormData:');
-        for (let [key, value] of formData.entries()) {
-          console.log(key, value);
-        }
+        setLoadingStage(2);
+        console.log('Analyzing document with unified endpoint...');
 
-        const response = await fetch('http://localhost:8001/api/analyze', {
+        const response = await fetch('http://localhost:8000/api/analyze/unified', {
           method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-          },
           body: formData,
-          mode: 'cors', // Explicitly enable CORS
+          mode: 'cors',
         });
 
         if (!response.ok) {
@@ -225,14 +152,8 @@ const DemoModal: React.FC<DemoModalProps> = ({ onClose }) => {
         const result = await response.json();
         console.log('Analysis result:', result);
 
-        // Combine prediction result with analysis result
-        if (predictionResult && predictionResult.classification) {
-          result.prediction_model_result = predictionResult;
-          console.log('Combined result with prediction model:', result);
-        }
-
-        // Stage 5: Complete document analysis
-        setLoadingStage(5);
+        // Stage 3: Complete document analysis
+        setLoadingStage(3);
 
         // Transform the API response to match our frontend expectations
         const getFileName = () => {
@@ -298,7 +219,7 @@ const DemoModal: React.FC<DemoModalProps> = ({ onClose }) => {
           const vitFormData = new FormData();
           vitFormData.append('file', imageFile);
           
-          const predictionResponse = await fetch('http://localhost:8001/api/classify/image', {
+          const predictionResponse = await fetch('http://localhost:8000/api/classify/image', {
             method: 'POST',
             body: vitFormData,
             mode: 'cors',
@@ -324,7 +245,7 @@ const DemoModal: React.FC<DemoModalProps> = ({ onClose }) => {
         parseFormData.append('detect_qr', 'true');
         parseFormData.append('vision_analysis', 'true');
 
-        const parseResponse = await fetch('http://localhost:8001/api/parse', {
+        const parseResponse = await fetch('http://localhost:8000/api/analyze/unified', {
           method: 'POST',
           body: parseFormData,
           mode: 'cors',
@@ -349,7 +270,7 @@ const DemoModal: React.FC<DemoModalProps> = ({ onClose }) => {
           console.log(key, value);
         }
 
-        const response = await fetch('http://localhost:8001/api/analyze', {
+        const response = await fetch('http://localhost:8000/api/analyze/unified', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -453,7 +374,7 @@ const DemoModal: React.FC<DemoModalProps> = ({ onClose }) => {
         setLoadingStage(4);
         console.log('Sending request to parse endpoint for OCR...');
         
-        const response = await fetch('http://localhost:8001/api/parse', {
+        const response = await fetch('http://localhost:8000/api/analyze/unified', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',

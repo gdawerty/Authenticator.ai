@@ -6,9 +6,13 @@ Combines app.py and app_minimal.py with enhanced features for production deploym
 import os
 import sys
 import jwt
+import ssl
 from datetime import datetime, timedelta
 from functools import wraps
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Fix SSL certificate verification for NLTK downloads
+ssl._create_default_https_context = ssl._create_unverified_context
 
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
@@ -77,6 +81,12 @@ try:
     from backend.routes.api_document_analysis import api_bp as doc_analysis_bp
 except ImportError:
     doc_analysis_bp = None
+
+# Import explanation routes
+try:
+    from backend.routes.explanation_routes import explanation_bp
+except ImportError:
+    explanation_bp = None
 
 # Authentication middleware
 def token_required(f):
@@ -216,7 +226,10 @@ def create_app():
     
     if clone_search_bp:
         app.register_blueprint(clone_search_bp, url_prefix='/api/clone')
-    
+
+    if explanation_bp:
+        app.register_blueprint(explanation_bp, url_prefix='/api/explanations')
+
     # Register Stage 3 API with Flask-RESTX if available
     if STAGE3_AVAILABLE:
         api = Api(app, doc='/api/stage3/doc/', version='1.0', title='Stage 3 Clone Detection API')
@@ -372,7 +385,7 @@ if __name__ == '__main__':
     
     # Run the application
     app.run(
-        host=getattr(Config, 'HOST', '127.0.0.1'), 
-        port=getattr(Config, 'PORT', 8001), 
+        host=getattr(Config, 'HOST', '127.0.0.1'),
+        port=getattr(Config, 'PORT', 8000),
         debug=getattr(Config, 'DEBUG', True)
     )
