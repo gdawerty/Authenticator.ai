@@ -1,0 +1,170 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: #C8C8BF;
+    color: #1A1A1A;
+    overflow: hidden;
+  }
+
+  /* Custom scrollbar for light theme */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
+  }
+}
+
+@layer utilities {
+  /* Glassmorphic utility classes */
+  .glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  /* Neon glow effects */
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+  }
+
+  .glow-cyan {
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.4);
+  }
+
+  .glow-green {
+    box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+  }
+
+  .glow-red {
+    box-shadow: 0 0 10px rgba(248, 113, 113, 0.5);
+  }
+
+  .glow-yellow {
+    box-shadow: 0 0 10px rgba(250, 204, 21, 0.5);
+  }
+
+  /* PDF rendering optimizations */
+  .react-pdf__Document {
+    font-family: 'Times New Roman', Georgia, serif;
+    font-size: 12pt;
+    line-height: 1.15;
+  }
+
+  .react-pdf__Page {
+    margin: 0 auto;
+  }
+
+  .react-pdf__Page__textContent {
+    user-select: text !important;
+    cursor: text !important;
+  }
+
+  .react-pdf__Page__canvas {
+    max-width: 100%;
+    height: auto !important;
+  }
+}
+
+/* Word Document Styling - Exact Microsoft Word Appearance */
+.word-document {
+  font-family: 'Times New Roman', Georgia, serif;
+  font-size: 12pt;
+  line-height: 1.15;
+  color: #000000;
+  text-align: left;
+}
+
+/* Reset browser defaults for clean Word-like rendering */
+.word-document * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Mammoth.js generates clean semantic HTML - minimal overrides needed */
+.word-document p {
+  margin-bottom: 10pt;
+}
+
+.word-document h1,
+.word-document h2,
+.word-document h3,
+.word-document h4,
+.word-document h5,
+.word-document h6 {
+  margin-top: 12pt;
+  margin-bottom: 6pt;
+  font-weight: bold;
+}
+
+.word-document ul,
+.word-document ol {
+  margin-left: 0.5in;
+  margin-bottom: 10pt;
+}
+
+.word-document li {
+  margin-bottom: 5pt;
+}
+
+.word-document strong {
+  font-weight: bold;
+}
+
+.word-document em {
+  font-style: italic;
+}
+
+.word-document u {
+  text-decoration: underline;
+}
+
+.word-document table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 10pt 0;
+}
+
+.word-document table td,
+.word-document table th {
+  border: 1px solid #000;
+  padding: 4pt 8pt;
+}
+
+.word-document a {
+  color: #0563C1;
+  text-decoration: underline;
+}
