@@ -1,25 +1,26 @@
-# --- BERT and ViT Folders (Available on Google Drive) ---
-BERT/
-ViT/
+# --- Archive (old code) ---
+archive/
 
 # --- Frontend (Vite + React + TypeScript) ---
-frontend/node_modules/
-frontend/dist/
-frontend/.vite/
+frontend_new/node_modules/
+frontend_new/dist/
+frontend_new/.vite/
 
 # Optional: local Vite config overrides
-frontend/*.local
+frontend_new/*.local
 
-# --- Backend (Flask + Python) ---
-backend/__pycache__/
-backend/*.pyc
-backend/*.pyo
-backend/*.pyd
-backend/instance/
-backend/.pytest_cache/
-backend/.mypy_cache/
-backend/.coverage
-backend/venv/
+# --- Backend (FastAPI + Python) ---
+backend_new/__pycache__/
+backend_new/*.pyc
+backend_new/*.pyo
+backend_new/*.pyd
+backend_new/instance/
+backend_new/.pytest_cache/
+backend_new/.mypy_cache/
+backend_new/.coverage
+backend_new/venv/
+backend_new/uploads/
+backend_new/storage/
 
 # --- Virtual Environment ---
 .venv/
@@ -64,14 +65,8 @@ data/
 *.db
 *.sqlite
 *.sqlite3
-backend/DB/
-backend/data/
+backend_new/authenticator.db
 data/
-
-# --- Docker Files to Exclude ---
-backend/node_modules/
-backend/frontend/node_modules/
-backend/frontend/dist/
 
 # --- PyCache and Build Files ---
 **/__pycache__/
@@ -93,7 +88,7 @@ backend/frontend/dist/
 # --- Logs ---
 *.log
 logs/
-backend/logs/
+backend_new/logs/
 
 # --- Environment Files ---
 .env
