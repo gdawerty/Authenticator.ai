@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     MAX_FILE_SIZE_MB: int = 50
     ALLOWED_EXTENSIONS: set[str] = {".pdf", ".docx", ".doc", ".png", ".jpg", ".jpeg"}
 
+    # Groq API
+    GROQ_API_KEY: Optional[str] = None
+    GROQ_MODEL: str = "mixtral-8x7b-32768"
+
     class Config:
         env_file = ".env"
         case_sensitive = True

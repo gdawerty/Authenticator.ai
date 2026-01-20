@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.api import upload, document, convert
+from app.api import upload, document, convert, context
 
 # Create FastAPI app
 app = FastAPI(
@@ -34,6 +34,11 @@ app.include_router(
     convert.router,
     prefix=settings.API_V1_PREFIX,
     tags=["convert"]
+)
+app.include_router(
+    context.router,
+    prefix=settings.API_V1_PREFIX,
+    tags=["context"]
 )
 
 
