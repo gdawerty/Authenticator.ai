@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DocumentViewer } from './components/DocumentViewer'
+import { ContentUnderstander } from './components/ContentUnderstander'
 
 interface Audit {
   id: string
@@ -233,15 +234,18 @@ function App() {
       </motion.div>
 
       {/* Main Workspace */}
-      <div className="flex-1 flex flex-col overflow-hidden relative">
+      <div className="flex-1 flex overflow-hidden relative">
         <AnimatePresence mode="wait">
           {activeDocumentId ? (
-            /* Document Viewer */
-            <DocumentViewer
-              key={activeDocumentId}
-              documentId={activeDocumentId}
-              onClose={closeDocument}
-            />
+            /* Document Viewer with Content Understander */
+            <>
+              <DocumentViewer
+                key={activeDocumentId}
+                documentId={activeDocumentId}
+                onClose={closeDocument}
+              />
+              <ContentUnderstander documentId={activeDocumentId} />
+            </>
           ) : (
             /* Landing State - Upload Portal */
             <motion.div
