@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.api import upload, document, convert, context, auth
+from app.api import upload, document, convert, context, auth, audits
 
 # Create FastAPI app
 app = FastAPI(
@@ -29,6 +29,11 @@ app.include_router(
     upload.router,
     prefix=f"{settings.API_V1_PREFIX}/upload",
     tags=["upload"]
+)
+app.include_router(
+    audits.router,
+    prefix=f"{settings.API_V1_PREFIX}/audits",
+    tags=["audits"]
 )
 app.include_router(
     document.router,

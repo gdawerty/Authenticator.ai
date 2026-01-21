@@ -35,14 +35,41 @@ function App() {
   const [activeSpan, setActiveSpan] = useState<any>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Load audits from API
+  const loadAudits = async (authToken: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/audits`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      })
+      if (response.ok) {
+        const auditsData = await response.json()
+        const formattedAudits: Audit[] = auditsData.map((audit: any) => ({
+          id: audit.id,
+          name: audit.name,
+          timestamp: new Date(audit.created_at),
+          status: audit.status as 'clean' | 'warning' | 'flagged',
+          documentId: audit.document_id || ''
+        }))
+        setAudits(formattedAudits)
+      }
+    } catch (error) {
+      console.error('Failed to load audits:', error)
+    }
+  }
+
   // Check if user is already logged in on mount
   useEffect(() => {
     const storedToken = localStorage.getItem('token')
     const storedUser = localStorage.getItem('user')
     if (storedToken && storedUser) {
       setToken(storedToken)
-      setUser(JSON.parse(storedUser))
+      const userData = JSON.parse(storedUser)
+      setUser(userData)
       setIsAuthenticated(true)
+      // Load audits when user is logged in
+      loadAudits(storedToken)
     }
   }, [])
 
@@ -67,6 +94,8 @@ function App() {
     setIsAuthenticated(true)
     localStorage.setItem('token', data.access_token)
     localStorage.setItem('user', JSON.stringify(data.user))
+    // Load audits after login
+    loadAudits(data.access_token)
   }
 
   const handleRegister = async (email: string, username: string, password: string) => {
@@ -179,16 +208,45 @@ function App() {
 
       const data = await response.json()
 
-      // Create audit entry
-      const newAudit: Audit = {
-        id: Date.now().toString(),
-        name: file.name,
-        timestamp: new Date(),
-        status: 'clean',
-        documentId: data.id
+      // Save audit to database
+      try {
+        const auditResponse = await fetch(`${API_BASE_URL}/audits`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: file.name,
+            document_id: data.id,
+            status: 'clean'
+          })
+        })
+
+        if (auditResponse.ok) {
+          const auditData = await auditResponse.json()
+          const newAudit: Audit = {
+            id: auditData.id,
+            name: auditData.name,
+            timestamp: new Date(auditData.created_at),
+            status: auditData.status as 'clean' | 'warning' | 'flagged',
+            documentId: auditData.document_id || ''
+          }
+          setAudits([newAudit, ...audits])
+        }
+      } catch (error) {
+        console.error('Failed to save audit:', error)
+        // Still show the audit locally even if save fails
+        const newAudit: Audit = {
+          id: Date.now().toString(),
+          name: file.name,
+          timestamp: new Date(),
+          status: 'clean',
+          documentId: data.id
+        }
+        setAudits([newAudit, ...audits])
       }
 
-      setAudits([newAudit, ...audits])
       setActiveDocumentId(data.id)
 
     } catch (error) {
@@ -362,14 +420,14 @@ function App() {
             /* Document Viewer with Content Understander */
             <>
               <DocumentViewer
-                key={activeDocumentId}
+                key={`document-viewer-${activeDocumentId}`}
                 documentId={activeDocumentId}
                 onClose={closeDocument}
                 activeSpanId={activeSpanId}
                 activeSpan={activeSpan}
               />
               <ContentUnderstander
-                key={activeDocumentId}
+                key={`content-understander-${activeDocumentId}`}
                 documentId={activeDocumentId}
                 onSpanHover={handleSpanHover}
               />

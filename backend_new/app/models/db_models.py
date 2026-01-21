@@ -107,3 +107,20 @@ class UserModel(Base):
     
     # Relationships
     documents = relationship("DocumentModel", back_populates="user", cascade="all, delete-orphan")
+    audits = relationship("AuditModel", back_populates="user", cascade="all, delete-orphan")
+
+
+class AuditModel(Base):
+    """Database model for audits table"""
+    __tablename__ = "audits"
+
+    id = Column(UUID, primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    document_id = Column(UUID, ForeignKey("documents.id", ondelete="SET NULL"), nullable=True)
+    status = Column(String(20), nullable=False, default="clean")  # clean, warning, flagged
+    created_at = Column(TIMESTAMP, server_default=func.now())
+
+    # Relationships
+    user = relationship("UserModel", back_populates="audits")
+    document = relationship("DocumentModel", foreign_keys=[document_id])
