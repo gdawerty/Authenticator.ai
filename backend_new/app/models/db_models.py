@@ -50,12 +50,14 @@ class DocumentModel(Base):
     type = Column(String(10), nullable=False)
     canonical_path = Column(Text, nullable=False)
     original_filename = Column(Text, nullable=False)
+    user_id = Column(UUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     company_id = Column(UUID, nullable=True)
     doc_metadata = Column('metadata', JSON, default={})
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
     # Relationships
+    user = relationship("UserModel", back_populates="documents")
     spans = relationship("DocumentSpanModel", back_populates="document", cascade="all, delete-orphan")
 
 
@@ -90,3 +92,18 @@ class EvidenceModel(Base):
 
     # Relationships
     span = relationship("DocumentSpanModel", back_populates="evidence")
+
+
+class UserModel(Base):
+    """Database model for users table"""
+    __tablename__ = "users"
+
+    id = Column(UUID, primary_key=True, default=uuid.uuid4)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    username = Column(String(100), unique=True, nullable=False, index=True)
+    hashed_password = Column(String(255), nullable=False)
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    documents = relationship("DocumentModel", back_populates="user", cascade="all, delete-orphan")

@@ -10,7 +10,12 @@ class Settings(BaseSettings):
     """Application configuration"""
 
     # Database
-    DATABASE_URL: str = "postgresql://authenticator:SecurePassword123!@postgres:5432/authenticator_db"
+    DATABASE_URL: str = "sqlite:///./authenticator.db"
+    
+    # JWT Settings
+    SECRET_KEY: str = "your-secret-key-change-in-production"  # Change this in production!
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     # Storage - use relative paths from backend_new directory
     STORAGE_PATH: str = str(BACKEND_ROOT / "storage")

@@ -7,8 +7,9 @@ from uuid import uuid4
 from app.db.session import get_db
 from app.core.storage import storage_manager
 from app.core.config import settings
+from app.core.auth import get_current_user
 from app.models.document import Document
-from app.models.db_models import DocumentModel, DocumentSpanModel
+from app.models.db_models import DocumentModel, DocumentSpanModel, UserModel
 from app.pipeline.normalize import normalizer
 from app.pipeline.parse import parser
 
@@ -18,7 +19,8 @@ router = APIRouter()
 @router.post("/upload")
 async def upload_document(
     file: UploadFile = File(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
 ):
     """
     Upload and process a document through the normalization and parsing pipeline
@@ -72,6 +74,7 @@ async def upload_document(
             type=doc_type,
             canonical_path=str(canonical_path),
             original_filename=file.filename,
+            user_id=current_user.id,
             doc_metadata={
                 "size_bytes": file_size,
                 "original_extension": file_ext,

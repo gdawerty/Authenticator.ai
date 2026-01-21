@@ -1,7 +1,17 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DocumentViewer } from './components/DocumentViewer'
 import { ContentUnderstander } from './components/ContentUnderstander'
+import { Login } from './components/Login'
+import { Register } from './components/Register'
+
+const API_BASE_URL = 'http://localhost:8002/api/v1'
+
+interface User {
+  id: string
+  email: string
+  username: string
+}
 
 interface Audit {
   id: string
@@ -12,6 +22,10 @@ interface Audit {
 }
 
 function App() {
+  const [user, setUser] = useState<User | null>(null)
+  const [token, setToken] = useState<string | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [showRegister, setShowRegister] = useState(false)
   const [audits, setAudits] = useState<Audit[]>([])
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -20,6 +34,81 @@ function App() {
   const [activeSpanId, setActiveSpanId] = useState<string | null>(null)
   const [activeSpan, setActiveSpan] = useState<any>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Check if user is already logged in on mount
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token')
+    const storedUser = localStorage.getItem('user')
+    if (storedToken && storedUser) {
+      setToken(storedToken)
+      setUser(JSON.parse(storedUser))
+      setIsAuthenticated(true)
+    }
+  }, [])
+
+  const handleLogin = async (username: string, password: string) => {
+    const formData = new FormData()
+    formData.append('username', username)
+    formData.append('password', password)
+
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      body: formData
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.detail || 'Login failed')
+    }
+
+    const data = await response.json()
+    setToken(data.access_token)
+    setUser(data.user)
+    setIsAuthenticated(true)
+    localStorage.setItem('token', data.access_token)
+    localStorage.setItem('user', JSON.stringify(data.user))
+  }
+
+  const handleRegister = async (email: string, username: string, password: string) => {
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, username, password })
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.detail || 'Registration failed')
+    }
+
+    // After successful registration, automatically log in
+    await handleLogin(username, password)
+  }
+
+  const handleLogout = () => {
+    setToken(null)
+    setUser(null)
+    setIsAuthenticated(false)
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+  }
+
+  // Show login/register if not authenticated
+  if (!isAuthenticated) {
+    return showRegister ? (
+      <Register
+        onRegister={handleRegister}
+        onSwitchToLogin={() => setShowRegister(false)}
+      />
+    ) : (
+      <Login
+        onLogin={handleLogin}
+        onSwitchToRegister={() => setShowRegister(true)}
+      />
+    )
+  }
 
   const handleSpanHover = (spanId: string | null, span?: any) => {
     setActiveSpanId(spanId)
@@ -76,8 +165,11 @@ function App() {
       const formData = new FormData()
       formData.append('file', file)
 
-      const response = await fetch('http://localhost:8002/api/v1/upload/upload', {
+      const response = await fetch(`${API_BASE_URL}/upload/upload`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
         body: formData
       })
 
@@ -157,22 +249,45 @@ function App() {
             animate={{ opacity: 1 }}
           >
             {!isSidebarCollapsed && (
-              <motion.h2
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="text-xl font-bold text-[#6f8f88]"
-              >
-                Authentia AI
-              </motion.h2>
+              <div className="flex-1">
+                <motion.h2
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="text-xl font-bold text-[#6f8f88]"
+                >
+                  Authentia AI
+                </motion.h2>
+                {user && (
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-xs text-[#2a2a2a]/60 mt-1"
+                  >
+                    {user.username}
+                  </motion.p>
+                )}
+              </div>
             )}
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="p-2 hover:bg-black/10 rounded-lg transition-colors text-[#2a2a2a]"
-            >
-              {isSidebarCollapsed ? '→' : '←'}
-            </motion.button>
+            <div className="flex items-center gap-2">
+              {!isSidebarCollapsed && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleLogout}
+                  className="px-3 py-1.5 text-xs bg-red-500/20 text-red-700 rounded-lg hover:bg-red-500/30 transition-colors"
+                >
+                  Logout
+                </motion.button>
+              )}
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                className="p-2 hover:bg-black/10 rounded-lg transition-colors text-[#2a2a2a]"
+              >
+                {isSidebarCollapsed ? '→' : '←'}
+              </motion.button>
+            </div>
           </motion.div>
         </div>
 

@@ -2,7 +2,7 @@
 """Initialize the database with required tables"""
 
 from app.db.session import engine, Base
-from app.models.db_models import DocumentModel, DocumentSpanModel, EvidenceModel
+from app.models.db_models import DocumentModel, DocumentSpanModel, EvidenceModel, UserModel
 
 def init_database():
     """Create all database tables"""
