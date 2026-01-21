@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Document, Page, pdfjs } from 'react-pdf'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
@@ -13,6 +13,8 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 interface DocumentViewerProps {
   documentId: string
   onClose?: () => void
+  activeSpanId?: string | null
+  activeSpan?: any
 }
 
 interface DocumentMetadata {
@@ -21,7 +23,7 @@ interface DocumentMetadata {
   created_at: string
 }
 
-export function DocumentViewer({ documentId, onClose }: DocumentViewerProps) {
+export function DocumentViewer({ documentId, onClose, activeSpanId, activeSpan }: DocumentViewerProps) {
   const [metadata, setMetadata] = useState<DocumentMetadata | null>(null)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [numPages, setNumPages] = useState<number>(0)
@@ -29,6 +31,22 @@ export function DocumentViewer({ documentId, onClose }: DocumentViewerProps) {
   const [scale, setScale] = useState<number>(1.0)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const pdfContainerRef = useRef<HTMLDivElement>(null)
+
+  // Scroll to span when hovered
+  useEffect(() => {
+    if (activeSpan && activeSpan.page && pdfContainerRef.current) {
+      // Smooth scroll to the page containing the span
+      const targetPage = activeSpan.page
+      if (targetPage === currentPage) {
+        // Already on the right page, just scroll within view
+        pdfContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      } else {
+        // Navigate to the correct page
+        setCurrentPage(targetPage)
+      }
+    }
+  }, [activeSpan, currentPage])
 
   useEffect(() => {
     const fetchDocument = async () => {
@@ -127,6 +145,7 @@ export function DocumentViewer({ documentId, onClose }: DocumentViewerProps) {
 
   return (
     <motion.div
+      ref={pdfContainerRef}
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={springConfig}
@@ -241,33 +260,28 @@ export function DocumentViewer({ documentId, onClose }: DocumentViewerProps) {
         </div>
       </motion.div>
 
-      {/* PDF Viewer Container - Exact US Letter Dimensions with 1-inch margins */}
+      {/* PDF Viewer Container */}
       <motion.div
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.3, stiffness: 100, damping: 20, type: "spring" }}
         className="mx-auto bg-white shadow-2xl"
-        style={{
-          width: `${8.5 * scale}in`,
-          minHeight: `${11 * scale}in`,
-          padding: `${1 * scale}in`, // Exact 1-inch margins like Microsoft Word, scaled
-        }}
       >
         {/* Live PDF rendered by react-pdf */}
         <Document
-          file={{ url: pdfUrl }}
+          file={pdfUrl}
           onLoadSuccess={onDocumentLoadSuccess}
           onLoadError={(error) => {
             console.error('PDF load error:', error)
             setError(`Failed to load PDF: ${error.message}`)
           }}
           loading={
-            <div className="flex items-center justify-center" style={{ minHeight: `${9 * scale}in` }}>
+            <div className="flex items-center justify-center w-full" style={{ minHeight: '600px' }}>
               <div className="animate-pulse text-gray-400 text-lg">Loading PDF...</div>
             </div>
           }
           error={
-            <div className="flex items-center justify-center" style={{ minHeight: `${9 * scale}in` }}>
+            <div className="flex items-center justify-center w-full" style={{ minHeight: '600px' }}>
               <div className="text-red-600 text-lg">Failed to load PDF</div>
             </div>
           }
@@ -275,9 +289,9 @@ export function DocumentViewer({ documentId, onClose }: DocumentViewerProps) {
           {numPages > 0 && (
             <Page
               pageNumber={currentPage}
-              width={516 * scale} // 6.5 inches at 72 DPI (8.5in - 2in margins), scaled
-              renderTextLayer={true}
-              renderAnnotationLayer={true}
+              width={850 * scale}
+              renderTextLayer={false}
+              renderAnnotationLayer={false}
             />
           )}
         </Document>

@@ -191,7 +191,11 @@ context_analyzer = None
 
 def get_context_analyzer() -> ContextAnalyzer:
     """Get or create the context analyzer singleton"""
+    from app.core.config import settings
     global context_analyzer
     if context_analyzer is None:
-        context_analyzer = ContextAnalyzer()
+        context_analyzer = ContextAnalyzer(
+            api_key=settings.GROQ_API_KEY,
+            model=settings.GROQ_MODEL
+        )
     return context_analyzer

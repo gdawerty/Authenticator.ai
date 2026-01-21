@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
 
-interface ContentUnderstander Props {
+interface ContentUnderstanderProps {
   documentId: string
+  onSpanHover?: (spanId: string | null, span?: DocumentSpan) => void
 }
 
 interface DocumentSpan {
@@ -10,6 +11,7 @@ interface DocumentSpan {
   span_type: string
   text: string
   page: number | null
+  bbox: any
 }
 
 interface ContextEntity {
@@ -40,13 +42,21 @@ interface DocumentContext {
   context_entities: ContextEntity
 }
 
-export function ContentUnderstander({ documentId }: ContentUnderstander Props) {
+export function ContentUnderstander({ documentId, onSpanHover }: ContentUnderstanderProps) {
   const [spans, setSpans] = useState<DocumentSpan[]>([])
   const [context, setContext] = useState<DocumentContext | null>(null)
   const [isLoadingSpans, setIsLoadingSpans] = useState(true)
   const [isLoadingContext, setIsLoadingContext] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'content' | 'context'>('content')
+  const [activeSpanId, setActiveSpanId] = useState<string | null>(null)
+
+  const handleSpanHover = (spanId: string | null, span?: DocumentSpan) => {
+    setActiveSpanId(spanId)
+    if (onSpanHover) {
+      onSpanHover(spanId, span)
+    }
+  }
 
   useEffect(() => {
     const fetchSpans = async () => {
@@ -87,7 +97,6 @@ export function ContentUnderstander({ documentId }: ContentUnderstander Props) {
 
       const data = await response.json()
       setContext(data)
-      setActiveTab('context')
       setIsLoadingContext(false)
     } catch (err) {
       console.error('Error analyzing context:', err)
@@ -161,22 +170,45 @@ export function ContentUnderstander({ documentId }: ContentUnderstander Props) {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05, ...springConfig }}
-                  className="p-3 bg-white/60 rounded-lg border border-black/5 hover:bg-white/80 transition-colors"
+                  onMouseEnter={() => handleSpanHover(span.id, span)}
+                  onMouseLeave={() => handleSpanHover(null)}
+                  className={`
+                    group relative p-4 rounded-xl border transition-all duration-300 cursor-pointer
+                    ${activeSpanId === span.id
+                      ? 'bg-white border-blue-500 shadow-lg translate-x-[-4px]'
+                      : 'bg-white/60 border-gray-200 hover:border-blue-300 hover:shadow-md'
+                    }
+                  `}
                 >
-                  <div className="flex items-start justify-between mb-1">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded ${
-                      span.span_type === 'title' ? 'bg-purple-100 text-purple-700' :
-                      span.span_type === 'heading' ? 'bg-blue-100 text-blue-700' :
-                      span.span_type === 'table' ? 'bg-green-100 text-green-700' :
-                      'bg-gray-100 text-gray-700'
-                    }`}>
+                  {/* Connector Dot (Visual Anchor) */}
+                  <div className={`
+                    absolute left-[-6px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-white transition-all duration-300
+                    ${activeSpanId === span.id ? 'bg-blue-500 scale-100 opacity-100' : 'bg-transparent scale-0 opacity-0'}
+                  `} />
+
+                  <div className="flex items-start justify-between mb-2">
+                    <span className={`
+                      text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-full transition-colors
+                      ${activeSpanId === span.id
+                        ? span.span_type === 'title' ? 'bg-purple-100 text-purple-700' :
+                          span.span_type === 'heading' ? 'bg-blue-100 text-blue-700' :
+                          span.span_type === 'table' ? 'bg-green-100 text-green-700' :
+                          'bg-blue-100 text-blue-700'
+                        : span.span_type === 'title' ? 'bg-purple-100/50 text-purple-600' :
+                          span.span_type === 'heading' ? 'bg-blue-100/50 text-blue-600' :
+                          span.span_type === 'table' ? 'bg-green-100/50 text-green-600' :
+                          'bg-gray-100 text-gray-500 group-hover:bg-blue-50 group-hover:text-blue-600'
+                      }
+                    `}>
                       {span.span_type}
                     </span>
                     {span.page && (
                       <span className="text-xs text-[#2a2a2a]/40">pg. {span.page}</span>
                     )}
                   </div>
-                  <p className="text-sm text-[#1A1A1A] leading-relaxed whitespace-pre-wrap">
+                  <p className={`text-sm leading-relaxed whitespace-pre-wrap transition-colors ${
+                    activeSpanId === span.id ? 'text-slate-800 font-medium' : 'text-slate-600'
+                  }`}>
                     {span.text}
                   </p>
                 </motion.div>

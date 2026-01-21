@@ -27,7 +27,7 @@ class ContextEntities(BaseModel):
 class PageNarrative(BaseModel):
     """Narrative summary for a single page"""
     page_number: int
-    page_type: Literal["FORM", "INVOICE", "CORRESPONDENCE", "LEGAL", "MEDICAL_RECORD", "OTHER"]
+    page_type: Literal["FORM", "INVOICE", "CORRESPONDENCE", "LEGAL", "MEDICAL_RECORD", "RESUME", "OTHER"]
     narrative_summary: str = Field(description="Executive-style narrative explaining the page")
     key_takeaway: str = Field(description="Brief summary of the page's purpose")
     supporting_chunks: List[str] = Field(default_factory=list, description="List of chunk IDs that support this narrative")

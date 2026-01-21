@@ -17,7 +17,14 @@ function App() {
   const [isDragging, setIsDragging] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null)
+  const [activeSpanId, setActiveSpanId] = useState<string | null>(null)
+  const [activeSpan, setActiveSpan] = useState<any>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleSpanHover = (spanId: string | null, span?: any) => {
+    setActiveSpanId(spanId)
+    setActiveSpan(span || null)
+  }
 
   const getGreeting = () => {
     const hour = new Date().getHours()
@@ -243,8 +250,14 @@ function App() {
                 key={activeDocumentId}
                 documentId={activeDocumentId}
                 onClose={closeDocument}
+                activeSpanId={activeSpanId}
+                activeSpan={activeSpan}
               />
-              <ContentUnderstander documentId={activeDocumentId} />
+              <ContentUnderstander
+                key={activeDocumentId}
+                documentId={activeDocumentId}
+                onSpanHover={handleSpanHover}
+              />
             </>
           ) : (
             /* Landing State - Upload Portal */
@@ -253,7 +266,7 @@ function App() {
               initial={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95, y: -20 }}
               transition={{ type: "spring", stiffness: 100, damping: 20 }}
-              className="h-full flex flex-col items-center justify-center px-8"
+              className="w-full h-full flex flex-col items-center justify-center px-8"
             >
               {/* Greeting */}
               <div className="text-center max-w-3xl w-full space-y-6">
