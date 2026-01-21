@@ -1,5 +1,9 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
+from pathlib import Path
+
+# Get the backend_new directory (parent of app directory)
+BACKEND_ROOT = Path(__file__).parent.parent.parent
 
 
 class Settings(BaseSettings):
@@ -8,9 +12,9 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "postgresql://authenticator:SecurePassword123!@postgres:5432/authenticator_db"
 
-    # Storage
-    STORAGE_PATH: str = "/workspace/backend_new/storage"
-    UPLOAD_PATH: str = "/workspace/backend_new/uploads"
+    # Storage - use relative paths from backend_new directory
+    STORAGE_PATH: str = str(BACKEND_ROOT / "storage")
+    UPLOAD_PATH: str = str(BACKEND_ROOT / "uploads")
 
     # API
     API_V1_PREFIX: str = "/api/v1"
