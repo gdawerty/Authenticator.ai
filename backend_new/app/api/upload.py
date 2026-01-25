@@ -121,4 +121,10 @@ async def upload_document(
         # Clean up on error
         if temp_path and temp_path.exists():
             temp_path.unlink()
+        # Log the full traceback for debugging
+        import traceback
+        print("=" * 80)
+        print("UPLOAD ERROR:")
+        print(traceback.format_exc())
+        print("=" * 80)
         raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")

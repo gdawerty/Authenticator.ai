@@ -1,14 +1,12 @@
-#!/usr/bin/env python3
-"""Initialize the database with required tables"""
-
+"""Initialize database tables"""
 from app.db.session import engine, Base
-from app.models.db_models import DocumentModel, DocumentSpanModel, EvidenceModel, UserModel, AuditModel
+from app.models.db_models import DocumentModel, DocumentSpanModel, UserModel, AuditModel
 
-def init_database():
+def init_db():
     """Create all database tables"""
     print("Creating database tables...")
     Base.metadata.create_all(bind=engine)
-    print("Database tables created successfully!")
+    print("✓ Database tables created successfully!")
 
 if __name__ == "__main__":
-    init_database()
+    init_db()
