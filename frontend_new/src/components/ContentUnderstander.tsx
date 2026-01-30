@@ -116,22 +116,22 @@ export function ContentUnderstander({ documentId, onSpanHover }: ContentUndersta
       initial={{ x: 100, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={springConfig}
-      className="w-96 flex flex-col bg-white/50 backdrop-blur-md border-l border-black/10 shadow-lg overflow-hidden"
+      className="w-96 flex flex-col bg-white/50 dark:bg-[#252525]/90 backdrop-blur-md border-l border-black/10 dark:border-white/10 shadow-lg overflow-hidden"
     >
       {/* Header */}
-      <div className="p-4 border-b border-black/10 bg-white/30">
-        <h3 className="text-lg font-semibold text-[#1A1A1A]">Content Understander</h3>
-        <p className="text-xs text-[#2a2a2a]/60 mt-1">AI-powered document analysis</p>
+      <div className="p-4 border-b border-black/10 dark:border-white/10 bg-white/30 dark:bg-white/5">
+        <h3 className="text-lg font-semibold text-[#1A1A1A] dark:text-white">Content Understander</h3>
+        <p className="text-xs text-[#2a2a2a]/60 dark:text-white/60 mt-1">AI-powered document analysis</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-black/10 bg-white/20">
+      <div className="flex border-b border-black/10 dark:border-white/10 bg-white/20 dark:bg-white/5">
         <button
           onClick={() => setActiveTab('content')}
           className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
             activeTab === 'content'
-              ? 'text-[#6f8f88] border-b-2 border-[#6f8f88] bg-white/40'
-              : 'text-[#2a2a2a]/60 hover:text-[#2a2a2a] hover:bg-white/20'
+              ? 'text-[#6f8f88] border-b-2 border-[#6f8f88] bg-white/40 dark:bg-white/10'
+              : 'text-[#2a2a2a]/60 dark:text-white/60 hover:text-[#2a2a2a] dark:hover:text-white hover:bg-white/20 dark:hover:bg-white/10'
           }`}
         >
           Extracted Content
@@ -140,8 +140,8 @@ export function ContentUnderstander({ documentId, onSpanHover }: ContentUndersta
           onClick={() => setActiveTab('context')}
           className={`flex-1 px-4 py-3 text-sm font-medium transition-colors relative ${
             activeTab === 'context'
-              ? 'text-[#6f8f88] border-b-2 border-[#6f8f88] bg-white/40'
-              : 'text-[#2a2a2a]/60 hover:text-[#2a2a2a] hover:bg-white/20'
+              ? 'text-[#6f8f88] border-b-2 border-[#6f8f88] bg-white/40 dark:bg-white/10'
+              : 'text-[#2a2a2a]/60 dark:text-white/60 hover:text-[#2a2a2a] dark:hover:text-white hover:bg-white/20 dark:hover:bg-white/10'
           }`}
         >
           AI Analysis
@@ -157,10 +157,10 @@ export function ContentUnderstander({ documentId, onSpanHover }: ContentUndersta
           <div className="p-4 space-y-3">
             {isLoadingSpans ? (
               <div className="flex items-center justify-center py-12">
-                <div className="animate-pulse text-[#2a2a2a]/60">Loading content...</div>
+                <div className="animate-pulse text-[#2a2a2a]/60 dark:text-white/60">Loading content...</div>
               </div>
             ) : spans.length === 0 ? (
-              <div className="text-center py-12 text-[#2a2a2a]/60 text-sm">
+              <div className="text-center py-12 text-[#2a2a2a]/60 dark:text-white/60 text-sm">
                 No content extracted
               </div>
             ) : (
@@ -175,8 +175,8 @@ export function ContentUnderstander({ documentId, onSpanHover }: ContentUndersta
                   className={`
                     group relative p-4 rounded-xl border transition-all duration-300 cursor-pointer
                     ${activeSpanId === span.id
-                      ? 'bg-white border-blue-500 shadow-lg translate-x-[-4px]'
-                      : 'bg-white/60 border-gray-200 hover:border-blue-300 hover:shadow-md'
+                      ? 'bg-white dark:bg-white/10 border-blue-500 shadow-lg translate-x-[-4px]'
+                      : 'bg-white/60 dark:bg-white/5 border-gray-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-500/50 hover:shadow-md'
                     }
                   `}
                 >
@@ -203,11 +203,11 @@ export function ContentUnderstander({ documentId, onSpanHover }: ContentUndersta
                       {span.span_type}
                     </span>
                     {span.page && (
-                      <span className="text-xs text-[#2a2a2a]/40">pg. {span.page}</span>
+                      <span className="text-xs text-[#2a2a2a]/40 dark:text-white/40">pg. {span.page}</span>
                     )}
                   </div>
                   <p className={`text-sm leading-relaxed whitespace-pre-wrap transition-colors ${
-                    activeSpanId === span.id ? 'text-slate-800 font-medium' : 'text-slate-600'
+                    activeSpanId === span.id ? 'text-slate-800 dark:text-white font-medium' : 'text-slate-600 dark:text-white/80'
                   }`}>
                     {span.text}
                   </p>
@@ -221,7 +221,7 @@ export function ContentUnderstander({ documentId, onSpanHover }: ContentUndersta
           <div className="p-4 space-y-4">
             {!context && !isLoadingContext && (
               <div className="text-center py-12 space-y-4">
-                <p className="text-sm text-[#2a2a2a]/60 mb-4">
+                <p className="text-sm text-[#2a2a2a]/60 dark:text-white/60 mb-4">
                   Generate AI-powered context analysis
                 </p>
                 <motion.button
@@ -233,7 +233,7 @@ export function ContentUnderstander({ documentId, onSpanHover }: ContentUndersta
                   Analyze Document
                 </motion.button>
                 {error && (
-                  <p className="text-xs text-red-600 mt-2">{error}</p>
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-2">{error}</p>
                 )}
               </div>
             )}
@@ -241,7 +241,7 @@ export function ContentUnderstander({ documentId, onSpanHover }: ContentUndersta
             {isLoadingContext && (
               <div className="flex flex-col items-center justify-center py-12 space-y-3">
                 <div className="w-8 h-8 border-3 border-[#6f8f88] border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-sm text-[#2a2a2a]/60">Analyzing with AI...</p>
+                <p className="text-sm text-[#2a2a2a]/60 dark:text-white/60">Analyzing with AI...</p>
               </div>
             )}
 
@@ -254,7 +254,7 @@ export function ContentUnderstander({ documentId, onSpanHover }: ContentUndersta
               >
                 {/* Page Narratives */}
                 <div>
-                  <h4 className="text-sm font-semibold text-[#1A1A1A] mb-3">Page Narratives</h4>
+                  <h4 className="text-sm font-semibold text-[#1A1A1A] dark:text-white mb-3">Page Narratives</h4>
                   <div className="space-y-3">
                     {context.page_narratives.map((narrative, index) => (
                       <motion.div
@@ -262,20 +262,20 @@ export function ContentUnderstander({ documentId, onSpanHover }: ContentUndersta
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.1, ...springConfig }}
-                        className="p-3 bg-gradient-to-br from-blue-50 to-white rounded-lg border border-blue-100"
+                        className="p-3 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-white/5 rounded-lg border border-blue-100 dark:border-blue-500/30"
                       >
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-semibold text-blue-700">
+                          <span className="text-xs font-semibold text-blue-700 dark:text-blue-400">
                             Page {narrative.page_number}
                           </span>
-                          <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-600 rounded">
+                          <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded">
                             {narrative.page_type}
                           </span>
                         </div>
-                        <p className="text-xs font-medium text-[#1A1A1A] mb-1">
+                        <p className="text-xs font-medium text-[#1A1A1A] dark:text-white mb-1">
                           {narrative.key_takeaway}
                         </p>
-                        <p className="text-xs text-[#2a2a2a]/70 leading-relaxed">
+                        <p className="text-xs text-[#2a2a2a]/70 dark:text-white/70 leading-relaxed">
                           {narrative.narrative_summary}
                         </p>
                       </motion.div>
@@ -286,7 +286,7 @@ export function ContentUnderstander({ documentId, onSpanHover }: ContentUndersta
                 {/* Primary Actors */}
                 {context.context_entities.primary_actors.length > 0 && (
                   <div>
-                    <h4 className="text-sm font-semibold text-[#1A1A1A] mb-2">Primary Actors</h4>
+                    <h4 className="text-sm font-semibold text-[#1A1A1A] dark:text-white mb-2">Primary Actors</h4>
                     <div className="flex flex-wrap gap-2">
                       {context.context_entities.primary_actors.map((actor, index) => (
                         <motion.span
@@ -294,7 +294,7 @@ export function ContentUnderstander({ documentId, onSpanHover }: ContentUndersta
                           initial={{ opacity: 0, scale: 0.8 }}
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ delay: index * 0.05 }}
-                          className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium"
+                          className="px-3 py-1 bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 rounded-full text-xs font-medium"
                         >
                           {actor}
                         </motion.span>
@@ -306,7 +306,7 @@ export function ContentUnderstander({ documentId, onSpanHover }: ContentUndersta
                 {/* Critical Dates */}
                 {context.context_entities.critical_dates.length > 0 && (
                   <div>
-                    <h4 className="text-sm font-semibold text-[#1A1A1A] mb-2">Critical Dates</h4>
+                    <h4 className="text-sm font-semibold text-[#1A1A1A] dark:text-white mb-2">Critical Dates</h4>
                     <div className="space-y-2">
                       {context.context_entities.critical_dates.map((date, index) => (
                         <motion.div
@@ -314,12 +314,12 @@ export function ContentUnderstander({ documentId, onSpanHover }: ContentUndersta
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.05 }}
-                          className="p-2 bg-amber-50 rounded border border-amber-200"
+                          className="p-2 bg-amber-50 dark:bg-amber-500/10 rounded border border-amber-200 dark:border-amber-500/30"
                         >
-                          <p className="text-xs font-medium text-amber-900">
+                          <p className="text-xs font-medium text-amber-900 dark:text-amber-300">
                             {date.source_text}
                           </p>
-                          <p className="text-xs text-amber-700">{date.description}</p>
+                          <p className="text-xs text-amber-700 dark:text-amber-400">{date.description}</p>
                         </motion.div>
                       ))}
                     </div>
@@ -329,7 +329,7 @@ export function ContentUnderstander({ documentId, onSpanHover }: ContentUndersta
                 {/* Financial Values */}
                 {context.context_entities.financial_values.length > 0 && (
                   <div>
-                    <h4 className="text-sm font-semibold text-[#1A1A1A] mb-2">Financial Values</h4>
+                    <h4 className="text-sm font-semibold text-[#1A1A1A] dark:text-white mb-2">Financial Values</h4>
                     <div className="space-y-2">
                       {context.context_entities.financial_values.map((value, index) => (
                         <motion.div
@@ -337,12 +337,12 @@ export function ContentUnderstander({ documentId, onSpanHover }: ContentUndersta
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.05 }}
-                          className="p-2 bg-green-50 rounded border border-green-200"
+                          className="p-2 bg-green-50 dark:bg-green-500/10 rounded border border-green-200 dark:border-green-500/30"
                         >
-                          <p className="text-xs font-bold text-green-900">
+                          <p className="text-xs font-bold text-green-900 dark:text-green-300">
                             ${value.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </p>
-                          <p className="text-xs text-green-700">{value.description}</p>
+                          <p className="text-xs text-green-700 dark:text-green-400">{value.description}</p>
                         </motion.div>
                       ))}
                     </div>
@@ -355,7 +355,7 @@ export function ContentUnderstander({ documentId, onSpanHover }: ContentUndersta
                   whileTap={{ scale: 0.98 }}
                   onClick={analyzeContext}
                   disabled={isLoadingContext}
-                  className="w-full px-4 py-2 bg-white/60 border border-black/10 rounded-lg hover:bg-white/80 transition-colors text-sm font-medium text-[#2a2a2a] disabled:opacity-50"
+                  className="w-full px-4 py-2 bg-white/60 dark:bg-white/10 border border-black/10 dark:border-white/10 rounded-lg hover:bg-white/80 dark:hover:bg-white/20 transition-colors text-sm font-medium text-[#2a2a2a] dark:text-white disabled:opacity-50"
                 >
                   Refresh Analysis
                 </motion.button>

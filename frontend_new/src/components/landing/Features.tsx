@@ -29,7 +29,7 @@ const features = [
 
 export function Features() {
   return (
-    <section id="features" className="py-24 px-6 border-t border-black/10">
+    <section id="features" className="py-24 px-6 border-t border-black/10 dark:border-white/10">
       <div className="max-w-6xl mx-auto">
         {/* Section Header */}
         <motion.div
@@ -42,10 +42,10 @@ export function Features() {
           <span className="text-[#6f8f88] font-mono text-sm tracking-wider mb-4 block">
             CAPABILITIES
           </span>
-          <h2 className="text-4xl md:text-5xl font-semibold mb-6" style={{ fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-4xl md:text-5xl font-semibold mb-6 dark:text-white" style={{ fontFamily: 'Georgia, serif' }}>
             Enterprise-Grade Forensics
           </h2>
-          <p className="text-[#2a2a2a]/70 text-lg max-w-2xl mx-auto">
+          <p className="text-[#2a2a2a]/70 dark:text-white/70 text-lg max-w-2xl mx-auto">
             Built for security teams and enterprises who need bulletproof document verification.
           </p>
         </motion.div>
@@ -60,18 +60,18 @@ export function Features() {
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
               whileHover={{ y: -5, scale: 1.02 }}
-              className="group p-6 rounded-2xl backdrop-blur-md bg-white/30 border border-black/10 hover:border-[#6f8f88]/30 transition-all duration-300"
+              className="group p-6 rounded-2xl backdrop-blur-md bg-white/30 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:border-[#6f8f88]/30 transition-all duration-300"
             >
               {/* Icon */}
-              <div className="w-12 h-12 rounded-xl bg-[#6f8f88]/10 flex items-center justify-center mb-4 group-hover:bg-[#6f8f88]/20 transition-colors">
+              <div className="w-12 h-12 rounded-xl bg-[#6f8f88]/10 dark:bg-[#6f8f88]/20 flex items-center justify-center mb-4 group-hover:bg-[#6f8f88]/20 dark:group-hover:bg-[#6f8f88]/30 transition-colors">
                 <svg className="w-6 h-6 text-[#6f8f88]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
 
               {/* Content */}
-              <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-              <p className="text-[#2a2a2a]/60 text-sm leading-relaxed">
+              <h3 className="text-lg font-semibold mb-2 dark:text-white">{feature.title}</h3>
+              <p className="text-[#2a2a2a]/60 dark:text-white/60 text-sm leading-relaxed">
                 {feature.description}
               </p>
             </motion.div>
@@ -103,7 +103,7 @@ export function Features() {
               <div className="text-4xl md:text-5xl font-semibold text-[#6f8f88] mb-2" style={{ fontFamily: 'Georgia, serif' }}>
                 {stat.value}
               </div>
-              <div className="text-sm text-[#2a2a2a]/60">{stat.label}</div>
+              <div className="text-sm text-[#2a2a2a]/60 dark:text-white/60">{stat.label}</div>
             </motion.div>
           ))}
         </motion.div>

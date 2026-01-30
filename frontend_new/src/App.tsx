@@ -7,6 +7,7 @@ import { Login } from './components/Login'
 import { Register } from './components/Register'
 import { OAuthCallback } from './components/OAuthCallback'
 import { LandingPage } from './components/landing'
+import { ThemeToggle } from './components/ThemeToggle'
 
 const API_BASE_URL = 'http://localhost:8002/api/v1'
 
@@ -43,6 +44,17 @@ function App() {
   const [hasAnimatedGreeting, setHasAnimatedGreeting] = useState(false)
   const [greetingIndex] = useState(() => Math.floor(Math.random() * 55)) // Random on initial load, stable during session
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Handle greeting animation - moved to top level to avoid hooks inside nested component
+  useEffect(() => {
+    const shouldAnimateGreeting = !hasAnimatedGreeting && !activeDocumentId && isAuthenticated && !isAuthLoading
+    if (shouldAnimateGreeting) {
+      const timer = setTimeout(() => {
+        setHasAnimatedGreeting(true)
+      }, 1500) // After all animations complete
+      return () => clearTimeout(timer)
+    }
+  }, [hasAnimatedGreeting, activeDocumentId, isAuthenticated, isAuthLoading])
 
   // Load audits from API
   const loadAudits = async (authToken: string) => {
@@ -163,19 +175,9 @@ function App() {
     // Only animate on first render of the landing page (when no document is active)
     const shouldAnimateGreeting = !hasAnimatedGreeting && !activeDocumentId
 
-    // Mark as animated after the animation duration
-    useEffect(() => {
-      if (shouldAnimateGreeting && !activeDocumentId) {
-        const timer = setTimeout(() => {
-          setHasAnimatedGreeting(true)
-        }, 1500) // After all animations complete
-        return () => clearTimeout(timer)
-      }
-    }, [shouldAnimateGreeting, activeDocumentId])
-
     return (
       <div
-        className="h-screen w-screen flex bg-[#C8C8BF] text-[#1A1A1A] font-sans overflow-hidden relative"
+        className="h-screen w-screen flex bg-[#C8C8BF] dark:bg-[#1a1a1a] text-[#1A1A1A] dark:text-[#e5e5e5] font-sans overflow-hidden relative transition-colors duration-300"
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -198,10 +200,10 @@ function App() {
           initial={{ width: isSidebarCollapsed ? 80 : 320 }}
           animate={{ width: isSidebarCollapsed ? 80 : 320 }}
           transition={springConfig}
-          className="relative backdrop-blur-md bg-[#b8b8af]/90 border-r border-black/10 flex flex-col shadow-lg z-10"
+          className="relative backdrop-blur-md bg-[#b8b8af]/90 dark:bg-[#252525]/90 border-r border-black/10 dark:border-white/10 flex flex-col shadow-lg z-10"
         >
           {/* Header */}
-          <div className="p-6 border-b border-black/10">
+          <div className="p-6 border-b border-black/10 dark:border-white/10">
             <motion.div
               className="flex items-center justify-between"
               initial={{ opacity: 0 }}
@@ -216,21 +218,24 @@ function App() {
                   Authentia AI
                 </motion.h2>
               )}
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                className="p-2 hover:bg-black/10 rounded-lg transition-colors text-[#2a2a2a]"
-              >
-                {isSidebarCollapsed ? '→' : '←'}
-              </motion.button>
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                  className="p-2 hover:bg-black/10 dark:hover:bg-white/10 rounded-lg transition-colors text-[#2a2a2a] dark:text-white"
+                >
+                  {isSidebarCollapsed ? '→' : '←'}
+                </motion.button>
+              </div>
             </motion.div>
           </div>
 
           {/* Recent Audits */}
           {!isSidebarCollapsed && (
             <div className="flex-1 overflow-y-auto p-4">
-              <p className="text-xs text-[#2a2a2a]/60 mb-3 px-2">RECENT AUDITS</p>
+              <p className="text-xs text-[#2a2a2a]/60 dark:text-white/60 mb-3 px-2">RECENT AUDITS</p>
               <motion.div
                 className="space-y-2"
                 initial="hidden"
@@ -244,7 +249,7 @@ function App() {
                 }}
               >
                 {audits.length === 0 ? (
-                  <p className="text-xs text-[#2a2a2a]/40 px-2 py-4 text-center">No audits yet</p>
+                  <p className="text-xs text-[#2a2a2a]/40 dark:text-white/40 px-2 py-4 text-center">No audits yet</p>
                 ) : (
                   audits.map(audit => (
                     <motion.div
@@ -256,12 +261,12 @@ function App() {
                       whileHover={{ scale: 1.02, x: 4 }}
                       transition={springConfig}
                       onClick={() => openAudit(audit)}
-                      className="p-4 rounded-xl backdrop-blur-sm bg-white/30 border border-black/10 cursor-pointer hover:bg-white/40 transition-all"
+                      className="p-4 rounded-xl backdrop-blur-sm bg-white/30 dark:bg-white/5 border border-black/10 dark:border-white/10 cursor-pointer hover:bg-white/40 dark:hover:bg-white/10 transition-all"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate text-[#1A1A1A]">{audit.name}</p>
-                          <p className="text-xs text-[#2a2a2a]/60 mt-1">
+                          <p className="font-medium text-sm truncate text-[#1A1A1A] dark:text-white">{audit.name}</p>
+                          <p className="text-xs text-[#2a2a2a]/60 dark:text-white/60 mt-1">
                             {audit.timestamp.toLocaleTimeString()}
                           </p>
                         </div>
@@ -284,7 +289,7 @@ function App() {
           )}
 
           {/* User Info & Actions - Bottom */}
-          <div className="p-4 border-t border-black/10">
+          <div className="p-4 border-t border-black/10 dark:border-white/10">
             {!isSidebarCollapsed && (
               <div className="space-y-3">
                 {/* User Info */}
@@ -303,8 +308,8 @@ function App() {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#1A1A1A] truncate">{user.username}</p>
-                      <p className="text-xs text-[#2a2a2a]/50 truncate">{user.email}</p>
+                      <p className="text-sm font-medium text-[#1A1A1A] dark:text-white truncate">{user.username}</p>
+                      <p className="text-xs text-[#2a2a2a]/50 dark:text-white/50 truncate">{user.email}</p>
                     </div>
                   </div>
                 )}
@@ -325,13 +330,13 @@ function App() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleLogout}
-                    className="flex-1 px-3 py-2 text-xs bg-red-500/20 text-red-700 rounded-lg hover:bg-red-500/30 transition-colors"
+                    className="flex-1 px-3 py-2 text-xs bg-red-500/20 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
                   >
                     Logout
                   </motion.button>
                 </div>
                 {/* Version */}
-                <p className="text-xs text-[#2a2a2a]/40 text-center">Forensic Document Engine v1.0</p>
+                <p className="text-xs text-[#2a2a2a]/40 dark:text-white/40 text-center">Forensic Document Engine v1.0</p>
               </div>
             )}
           </div>
@@ -373,7 +378,7 @@ function App() {
                     // Use smaller font for longer greetings (5+ words)
                     const fontSize = wordCount >= 5 ? 'text-5xl' : 'text-6xl'
                     return (
-                      <h1 className={`${fontSize} font-semibold text-[#1A1A1A] tracking-tight`}>
+                      <h1 className={`${fontSize} font-semibold text-[#1A1A1A] dark:text-white tracking-tight`}>
                         {greeting.split(' ').map((word, index) => (
                           <motion.span
                             key={index}
@@ -396,7 +401,7 @@ function App() {
                     initial={shouldAnimateGreeting ? { opacity: 0 } : false}
                     animate={{ opacity: 1 }}
                     transition={shouldAnimateGreeting ? { duration: 0.7, delay: 0.8 } : { duration: 0 }}
-                    className="text-[#2a2a2a]/70 text-lg"
+                    className="text-[#2a2a2a]/70 dark:text-white/70 text-lg"
                   >
                     Drop a document to begin forensic analysis
                   </motion.p>
@@ -445,8 +450,8 @@ function App() {
                     }
                     className={`relative w-48 h-48 rounded-full backdrop-blur-md transition-all ${
                       isDragging
-                        ? 'border-2 border-dashed border-[#708090] bg-white/50'
-                        : 'border border-black/10 bg-white/30 hover:bg-white/40 hover:border-[#6f8f88]/50'
+                        ? 'border-2 border-dashed border-[#708090] bg-white/50 dark:bg-white/20'
+                        : 'border border-black/10 dark:border-white/10 bg-white/30 dark:bg-white/5 hover:bg-white/40 dark:hover:bg-white/10 hover:border-[#6f8f88]/50'
                     } ${isProcessing ? 'opacity-75 cursor-wait' : 'cursor-pointer'}`}
                     style={{
                       boxShadow: isDragging
@@ -462,7 +467,7 @@ function App() {
                       >
                         {isProcessing ? '⏳' : '📎'}
                       </motion.div>
-                      <p className="text-[#2a2a2a] text-sm font-medium px-6 text-center">
+                      <p className="text-[#2a2a2a] dark:text-white/80 text-sm font-medium px-6 text-center">
                         {isProcessing ? 'Processing...' : isDragging ? 'Drop Here' : 'Upload Document'}
                       </p>
                     </div>
@@ -474,7 +479,7 @@ function App() {
                   initial={shouldAnimateGreeting ? { opacity: 0 } : false}
                   animate={{ opacity: 1 }}
                   transition={shouldAnimateGreeting ? { duration: 0.7, delay: 1.2 } : { duration: 0 }}
-                  className="mt-8 text-xs text-[#2a2a2a]/50"
+                  className="mt-8 text-xs text-[#2a2a2a]/50 dark:text-white/50"
                 >
                   Supports: PDF, DOCX, DOC, PNG, JPG
                 </motion.p>
@@ -497,14 +502,14 @@ function App() {
     // 50+ varied greetings
     const greetings = [
       'Hey there', 'Hello', 'Hi', 'Howdy', 'Welcome back',
-      'Good to see you', 'Great to have you', 'Nice to see you', 'Welcome',
+      'Good to see you', 'Aloha', 'Great to have you', 'Nice to see you', 'Welcome',
       'What\'s up', 'Yo', 'Hey', 'Hiya', 'Greetings',
-      'Ahoy', 'Salutations', 'Well hello there', 'Look who\'s here',
+      'Ahoy', 'Salutations', 'Well hello there', 
       'There you are', 'Hey hey', 'Hi there', 'Hello there',
       'Good day', 'Lovely to see you', 'Great to see you back',
       'Welcome aboard', 'Hey friend', 'Hello friend', 'Hi friend',
-      'What\'s good', 'Sup', 'Hey now', 'Well well well',
-      'Look who showed up', 'The legend returns', 'Back at it',
+      'What\'s good', 'Sup', 'Hey now', 'There they are',
+      'The legend returns', 'Back at it', 'Good to have you back',
       'Ready to work', 'Let\'s get started', 'Time to shine',
       'Here we go', 'Let\'s do this', 'Ready when you are',
       'At your service', 'Happy to help', 'Welcome to the party',

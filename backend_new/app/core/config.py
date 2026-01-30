@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     # JWT Settings
     SECRET_KEY: str = "your-secret-key-change-in-production"  # Change this in production!
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080  # 7 days
 
     # Storage - use relative paths from backend_new directory
     STORAGE_PATH: str = str(BACKEND_ROOT / "storage")
