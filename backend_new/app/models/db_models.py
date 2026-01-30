@@ -103,6 +103,7 @@ class UserModel(Base):
     username = Column(String(100), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=True)  # Nullable for OAuth users
     oauth_provider = Column(String(50), nullable=True)  # e.g., 'google', 'github', 'microsoft'
+    profile_picture = Column(Text, nullable=True)  # URL to profile picture
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
     

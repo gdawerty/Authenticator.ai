@@ -35,7 +35,7 @@ export function OAuthCallback() {
           localStorage.setItem('oauth_provider', provider || 'unknown')
 
           // Force a full page reload to ensure App picks up the auth state
-          window.location.href = '/'
+          window.location.href = '/app'
         } catch (err) {
           console.error('OAuth callback error:', err)
           setError('Authentication failed')

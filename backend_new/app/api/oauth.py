@@ -111,6 +111,7 @@ async def oauth_callback(
                 user_info = user_response.json()
                 email = user_info.get('email')
                 name = user_info.get('name')
+                profile_picture = user_info.get('picture')
 
             elif provider == 'github':
                 token_response = await client.post(
@@ -141,6 +142,7 @@ async def oauth_callback(
                 emails = email_response.json()
                 email = next((e['email'] for e in emails if e.get('primary')), emails[0]['email'] if emails else None)
                 name = user_info.get('name') or user_info.get('login')
+                profile_picture = user_info.get('avatar_url')
 
             elif provider == 'microsoft':
                 token_response = await client.post(
@@ -165,6 +167,9 @@ async def oauth_callback(
                 user_info = user_response.json()
                 email = user_info.get('mail') or user_info.get('userPrincipalName')
                 name = user_info.get('displayName')
+                # Microsoft doesn't have a simple URL for profile picture, we'd need to fetch it separately
+                # For now, we'll leave it as None for Microsoft users
+                profile_picture = None
 
             else:
                 raise HTTPException(status_code=400, detail=f"Unsupported provider: {provider}")
@@ -181,11 +186,18 @@ async def oauth_callback(
                     email=email,
                     username=name or email.split('@')[0],
                     hashed_password=None,  # OAuth users don't have passwords
-                    oauth_provider=provider
+                    oauth_provider=provider,
+                    profile_picture=profile_picture
                 )
                 db.add(user)
                 db.commit()
                 db.refresh(user)
+            else:
+                # Update profile picture if it changed
+                if profile_picture and user.profile_picture != profile_picture:
+                    user.profile_picture = profile_picture
+                    db.commit()
+                    db.refresh(user)
 
             # Create access token (use user.id for consistency with regular login)
             access_token = create_access_token(data={"sub": str(user.id)})

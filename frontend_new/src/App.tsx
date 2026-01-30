@@ -6,6 +6,7 @@ import { ContentUnderstander } from './components/ContentUnderstander'
 import { Login } from './components/Login'
 import { Register } from './components/Register'
 import { OAuthCallback } from './components/OAuthCallback'
+import { LandingPage } from './components/landing'
 
 const API_BASE_URL = 'http://localhost:8002/api/v1'
 
@@ -13,6 +14,8 @@ interface User {
   id: string
   email: string
   username: string
+  profile_picture?: string
+  oauth_provider?: string
 }
 
 interface Audit {
@@ -38,6 +41,7 @@ function App() {
   const [activeSpanId, setActiveSpanId] = useState<string | null>(null)
   const [activeSpan, setActiveSpan] = useState<any>(null)
   const [hasAnimatedGreeting, setHasAnimatedGreeting] = useState(false)
+  const [greetingIndex] = useState(() => Math.floor(Math.random() * 55)) // Random on initial load, stable during session
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Load audits from API
@@ -102,8 +106,8 @@ function App() {
     localStorage.setItem('user', JSON.stringify(data.user))
     // Load audits after login
     loadAudits(data.access_token)
-    // Navigate to home
-    navigate('/')
+    // Navigate to app
+    navigate('/app')
   }
 
   const handleRegister = async (email: string, username: string, password: string) => {
@@ -204,45 +208,22 @@ function App() {
               animate={{ opacity: 1 }}
             >
               {!isSidebarCollapsed && (
-                <div className="flex-1">
-                  <motion.h2
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="text-xl font-bold text-[#6f8f88]"
-                  >
-                    Authentia AI
-                  </motion.h2>
-                  {user && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-xs text-[#2a2a2a]/60 mt-1"
-                    >
-                      {user.username}
-                    </motion.p>
-                  )}
-                </div>
-              )}
-              <div className="flex items-center gap-2">
-                {!isSidebarCollapsed && (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleLogout}
-                    className="px-3 py-1.5 text-xs bg-red-500/20 text-red-700 rounded-lg hover:bg-red-500/30 transition-colors"
-                  >
-                    Logout
-                  </motion.button>
-                )}
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                  className="p-2 hover:bg-black/10 rounded-lg transition-colors text-[#2a2a2a]"
+                <motion.h2
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="text-xl font-bold text-[#6f8f88]"
                 >
-                  {isSidebarCollapsed ? '→' : '←'}
-                </motion.button>
-              </div>
+                  Authentia AI
+                </motion.h2>
+              )}
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                className="p-2 hover:bg-black/10 rounded-lg transition-colors text-[#2a2a2a]"
+              >
+                {isSidebarCollapsed ? '→' : '←'}
+              </motion.button>
             </motion.div>
           </div>
 
@@ -302,10 +283,56 @@ function App() {
             </div>
           )}
 
-          {/* Platform Info */}
+          {/* User Info & Actions - Bottom */}
           <div className="p-4 border-t border-black/10">
             {!isSidebarCollapsed && (
-              <p className="text-xs text-[#2a2a2a]/50">Forensic Document Engine v1.0</p>
+              <div className="space-y-3">
+                {/* User Info */}
+                {user && (
+                  <div className="flex items-center gap-3">
+                    {user.profile_picture ? (
+                      <img
+                        src={user.profile_picture}
+                        alt={user.username}
+                        className="w-8 h-8 rounded-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-[#6f8f88] flex items-center justify-center text-white text-sm font-medium">
+                        {user.username?.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-[#1A1A1A] truncate">{user.username}</p>
+                      <p className="text-xs text-[#2a2a2a]/50 truncate">{user.email}</p>
+                    </div>
+                  </div>
+                )}
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => navigate('/')}
+                    className="flex-1 px-3 py-2 text-xs bg-[#6f8f88]/20 text-[#6f8f88] rounded-lg hover:bg-[#6f8f88]/30 transition-colors flex items-center justify-center gap-1"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    Home
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleLogout}
+                    className="flex-1 px-3 py-2 text-xs bg-red-500/20 text-red-700 rounded-lg hover:bg-red-500/30 transition-colors"
+                  >
+                    Logout
+                  </motion.button>
+                </div>
+                {/* Version */}
+                <p className="text-xs text-[#2a2a2a]/40 text-center">Forensic Document Engine v1.0</p>
+              </div>
             )}
           </div>
         </motion.div>
@@ -340,23 +367,31 @@ function App() {
               >
                 {/* Greeting */}
                 <div className="text-center max-w-3xl w-full space-y-6">
-                  <h1 className="text-6xl font-semibold text-[#1A1A1A] tracking-tight">
-                    {getGreeting().split('').map((char, index) => (
-                      <motion.span
-                        key={index}
-                        initial={shouldAnimateGreeting ? { opacity: 0, y: 10 } : false}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={shouldAnimateGreeting ? {
-                          duration: 0.3,
-                          delay: index * 0.05,
-                          ease: "easeOut"
-                        } : { duration: 0 }}
-                        className="inline-block"
-                      >
-                        {char === ' ' ? '\u00A0' : char}
-                      </motion.span>
-                    ))}
-                  </h1>
+                  {(() => {
+                    const greeting = getGreeting()
+                    const wordCount = greeting.split(' ').length
+                    // Use smaller font for longer greetings (5+ words)
+                    const fontSize = wordCount >= 5 ? 'text-5xl' : 'text-6xl'
+                    return (
+                      <h1 className={`${fontSize} font-semibold text-[#1A1A1A] tracking-tight`}>
+                        {greeting.split(' ').map((word, index) => (
+                          <motion.span
+                            key={index}
+                            initial={shouldAnimateGreeting ? { opacity: 0, y: 10 } : false}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={shouldAnimateGreeting ? {
+                              duration: 0.4,
+                              delay: index * 0.1,
+                              ease: "easeOut"
+                            } : { duration: 0 }}
+                            className="inline-block mr-[0.3em]"
+                          >
+                            {word}
+                          </motion.span>
+                        ))}
+                      </h1>
+                    )
+                  })()}
                   <motion.p
                     initial={shouldAnimateGreeting ? { opacity: 0 } : false}
                     animate={{ opacity: 1 }}
@@ -457,10 +492,32 @@ function App() {
   }
 
   const getGreeting = () => {
-    const hour = new Date().getHours()
-    if (hour < 12) return 'Good Morning!'
-    if (hour < 18) return 'Good Afternoon!'
-    return 'Good Evening!'
+    const firstName = user?.username?.split(' ')[0] || user?.username || ''
+
+    // 50+ varied greetings
+    const greetings = [
+      'Hey there', 'Hello', 'Hi', 'Howdy', 'Welcome back',
+      'Good to see you', 'Great to have you', 'Nice to see you', 'Welcome',
+      'What\'s up', 'Yo', 'Hey', 'Hiya', 'Greetings',
+      'Ahoy', 'Salutations', 'Well hello there', 'Look who\'s here',
+      'There you are', 'Hey hey', 'Hi there', 'Hello there',
+      'Good day', 'Lovely to see you', 'Great to see you back',
+      'Welcome aboard', 'Hey friend', 'Hello friend', 'Hi friend',
+      'What\'s good', 'Sup', 'Hey now', 'Well well well',
+      'Look who showed up', 'The legend returns', 'Back at it',
+      'Ready to work', 'Let\'s get started', 'Time to shine',
+      'Here we go', 'Let\'s do this', 'Ready when you are',
+      'At your service', 'Happy to help', 'Welcome to the party',
+      'Let\'s roll', 'Game time', 'Buckle up', 'Here we go again',
+      'Another day another document', 'Back for more', 'Missed you',
+      'Long time no see', 'Fancy seeing you here', 'Well hello',
+      'Top of the day', 'Nice of you to drop by', 'Hey superstar',
+    ]
+
+    // Use the stable greeting index (random on page load, stable during session)
+    const greeting = greetings[greetingIndex % greetings.length]
+
+    return firstName ? `${greeting}, ${firstName}!` : `${greeting}!`
   }
 
   const handleDragEnter = (e: React.DragEvent) => {
@@ -593,10 +650,11 @@ function App() {
 
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/auth/success" element={<OAuthCallback />} />
-      <Route path="/" element={<MainApp />} />
+      <Route path="/app" element={<MainApp />} />
     </Routes>
   )
 }

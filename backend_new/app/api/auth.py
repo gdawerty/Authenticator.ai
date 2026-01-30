@@ -24,7 +24,9 @@ class UserResponse(BaseModel):
     id: str
     email: str
     username: str
-    
+    profile_picture: str | None = None
+    oauth_provider: str | None = None
+
     class Config:
         from_attributes = True
 
@@ -114,11 +116,23 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
     return Token(
         access_token=access_token,
         token_type="bearer",
-        user=UserResponse(id=str(user.id), email=user.email, username=user.username)
+        user=UserResponse(
+            id=str(user.id),
+            email=user.email,
+            username=user.username,
+            profile_picture=user.profile_picture,
+            oauth_provider=user.oauth_provider
+        )
     )
 
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(current_user: UserModel = Depends(get_current_user)):
     """Get current user information"""
-    return UserResponse(id=str(current_user.id), email=current_user.email, username=current_user.username)
+    return UserResponse(
+        id=str(current_user.id),
+        email=current_user.email,
+        username=current_user.username,
+        profile_picture=current_user.profile_picture,
+        oauth_provider=current_user.oauth_provider
+    )
