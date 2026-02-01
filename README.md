@@ -9,6 +9,19 @@ A deterministic document processing pipeline with AI-powered context analysis.
 - Node.js 18+ (for frontend)
 - Groq API Key (free at https://console.groq.com)
 
+### One-Command Start
+Start both backend and frontend with a single command:
+```bash
+./start.sh
+```
+
+This will:
+- Kill any existing processes on ports 8002 and 5175
+- Start the backend on http://localhost:8002
+- Start the frontend on http://localhost:5175
+
+Press `Ctrl+C` to stop both servers.
+
 ---
 
 ## 📦 Backend Setup (backend_new)
