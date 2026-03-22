@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.api import upload, document, convert, context, auth, audits, oauth
+from app.api import upload, document, convert, context, auth, audits, oauth, pipeline, contracts
 
 # Create FastAPI app
 app = FastAPI(
@@ -54,6 +54,16 @@ app.include_router(
     context.router,
     prefix=settings.API_V1_PREFIX,
     tags=["context"]
+)
+app.include_router(
+    pipeline.router,
+    prefix=f"{settings.API_V1_PREFIX}/pipeline",
+    tags=["pipeline"]
+)
+app.include_router(
+    contracts.router,
+    prefix=f"{settings.API_V1_PREFIX}/contracts",
+    tags=["contracts"]
 )
 
 

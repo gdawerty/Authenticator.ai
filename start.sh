@@ -14,7 +14,7 @@ lsof -ti:5175 | xargs kill -9 2>/dev/null
 echo "📦 Starting Backend (port 8002)..."
 cd backend_new
 source ../.venv/bin/activate 2>/dev/null || true
-uvicorn app.main:app --reload --port 8002 &
+uvicorn app.main:app --reload --reload-dir app --port 8002 &
 BACKEND_PID=$!
 cd ..
 

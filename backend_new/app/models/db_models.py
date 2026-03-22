@@ -56,9 +56,14 @@ class DocumentModel(Base):
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
+    contract_id = Column(UUID, ForeignKey("contracts.id", ondelete="SET NULL"), nullable=True, index=True)
+    folder_id = Column(UUID, ForeignKey("contract_folders.id", ondelete="SET NULL"), nullable=True)
+
     # Relationships
     user = relationship("UserModel", back_populates="documents")
     spans = relationship("DocumentSpanModel", back_populates="document", cascade="all, delete-orphan")
+    contract = relationship("ContractModel", foreign_keys=[contract_id])
+    folder = relationship("ContractFolderModel", foreign_keys=[folder_id])
 
 
 class DocumentSpanModel(Base):
@@ -110,6 +115,7 @@ class UserModel(Base):
     # Relationships
     documents = relationship("DocumentModel", back_populates="user", cascade="all, delete-orphan")
     audits = relationship("AuditModel", back_populates="user", cascade="all, delete-orphan")
+    contracts = relationship("ContractModel", back_populates="user", cascade="all, delete-orphan")
 
 
 class AuditModel(Base):
@@ -126,3 +132,33 @@ class AuditModel(Base):
     # Relationships
     user = relationship("UserModel", back_populates="audits")
     document = relationship("DocumentModel", foreign_keys=[document_id])
+
+
+class ContractModel(Base):
+    """A contract project - top-level folder"""
+    __tablename__ = "contracts"
+
+    id = Column(UUID, primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    status = Column(String(20), nullable=False, default="pending")  # pending, in_progress, complete
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    user = relationship("UserModel", back_populates="contracts")
+    folders = relationship("ContractFolderModel", back_populates="contract", cascade="all, delete-orphan")
+
+
+class ContractFolderModel(Base):
+    """A folder inside a contract (can be nested)"""
+    __tablename__ = "contract_folders"
+
+    id = Column(UUID, primary_key=True, default=uuid.uuid4)
+    contract_id = Column(UUID, ForeignKey("contracts.id", ondelete="CASCADE"), nullable=False, index=True)
+    parent_id = Column(UUID, ForeignKey("contract_folders.id", ondelete="CASCADE"), nullable=True)
+    name = Column(String(255), nullable=False)
+    created_at = Column(TIMESTAMP, server_default=func.now())
+
+    contract = relationship("ContractModel", back_populates="folders")
+    children = relationship("ContractFolderModel", back_populates="parent", cascade="all, delete-orphan")
+    parent = relationship("ContractFolderModel", back_populates="children", remote_side=[id])

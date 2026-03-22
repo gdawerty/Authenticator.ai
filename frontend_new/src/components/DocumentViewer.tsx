@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react'
 import { Document, Page, pdfjs } from 'react-pdf'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
@@ -23,7 +23,8 @@ interface DocumentMetadata {
   created_at: string
 }
 
-export function DocumentViewer({ documentId, onClose, activeSpanId, activeSpan }: DocumentViewerProps) {
+// Memoized component to prevent unnecessary re-renders
+export const DocumentViewer = memo(function DocumentViewer({ documentId, onClose, activeSpanId, activeSpan }: DocumentViewerProps) {
   const [metadata, setMetadata] = useState<DocumentMetadata | null>(null)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [numPages, setNumPages] = useState<number>(0)
@@ -37,7 +38,6 @@ export function DocumentViewer({ documentId, onClose, activeSpanId, activeSpan }
   // Scroll to span when hovered (for continuous scroll view)
   useEffect(() => {
     if (activeSpan && activeSpan.page && pdfContainerRef.current) {
-      // Find the page element and scroll to it
       const pageElement = pdfContainerRef.current.querySelector(`[data-page-number="${activeSpan.page}"]`)
       if (pageElement) {
         pageElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -45,33 +45,38 @@ export function DocumentViewer({ documentId, onClose, activeSpanId, activeSpan }
     }
   }, [activeSpan])
 
+  // Fetch document data - runs once on mount
   useEffect(() => {
+    let isMounted = true
+
     const fetchDocument = async () => {
       try {
         setIsLoading(true)
         hasLoadedRef.current = false
+        setPdfLoaded(false)
 
-        // Fetch metadata
         const metadataResponse = await fetch(`http://localhost:8002/api/v1/convert/${documentId}`)
         if (!metadataResponse.ok) {
           throw new Error('Failed to fetch document metadata')
         }
         const metadataData = await metadataResponse.json()
+
+        if (!isMounted) return
+
         setMetadata(metadataData.metadata)
-
-        // Fetch the original PDF file
-        const url = `http://localhost:8002/api/v1/pdf/${documentId}`
-        setPdfUrl(url)
-
+        setPdfUrl(`http://localhost:8002/api/v1/pdf/${documentId}`)
         setIsLoading(false)
       } catch (err) {
+        if (!isMounted) return
         setError(err instanceof Error ? err.message : 'Unknown error')
         setIsLoading(false)
       }
     }
 
     fetchDocument()
-  }, [documentId])
+
+    return () => { isMounted = false }
+  }, []) // Empty deps - only run on mount
 
   // Memoize callbacks to prevent unnecessary re-renders
   const onDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
@@ -291,4 +296,4 @@ export function DocumentViewer({ documentId, onClose, activeSpanId, activeSpan }
       <div className="h-8"></div>
     </motion.div>
   )
-}
+})

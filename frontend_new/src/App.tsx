@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
-import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DocumentViewer } from './components/DocumentViewer'
 import { ContentUnderstander } from './components/ContentUnderstander'
@@ -8,6 +8,7 @@ import { Register } from './components/Register'
 import { OAuthCallback } from './components/OAuthCallback'
 import { LandingPage } from './components/landing'
 import { ThemeToggle } from './components/ThemeToggle'
+import { ContractWorkspace } from './components/ContractWorkspace'
 
 const API_BASE_URL = 'http://localhost:8002/api/v1'
 
@@ -27,34 +28,44 @@ interface Audit {
   documentId: string
 }
 
+interface Contract {
+  id: string
+  name: string
+  status: string
+  created_at: string
+  document_count: number
+}
+
 function App() {
   const navigate = useNavigate()
-  const location = useLocation()
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isAuthLoading, setIsAuthLoading] = useState(true)
-  const [audits, setAudits] = useState<Audit[]>([])
+  const [_audits, setAudits] = useState<Audit[]>([])
+  const [contracts, setContracts] = useState<Contract[]>([])
+  const [activeContractId, setActiveContractId] = useState<string | null>(null)
+  const [activeContractName, setActiveContractName] = useState<string>('')
+  const [showCreateContract, setShowCreateContract] = useState(false)
+  const [newContractName, setNewContractName] = useState('')
+  const [isCreatingContract, setIsCreatingContract] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  const [isDragging, setIsDragging] = useState(false)
-  const [isProcessing, setIsProcessing] = useState(false)
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null)
   const [activeSpanId, setActiveSpanId] = useState<string | null>(null)
   const [activeSpan, setActiveSpan] = useState<any>(null)
   const [hasAnimatedGreeting, setHasAnimatedGreeting] = useState(false)
   const [greetingIndex] = useState(() => Math.floor(Math.random() * 55)) // Random on initial load, stable during session
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Handle greeting animation - moved to top level to avoid hooks inside nested component
   useEffect(() => {
-    const shouldAnimateGreeting = !hasAnimatedGreeting && !activeDocumentId && isAuthenticated && !isAuthLoading
+    const shouldAnimateGreeting = !hasAnimatedGreeting && !activeDocumentId && !activeContractId && isAuthenticated && !isAuthLoading
     if (shouldAnimateGreeting) {
       const timer = setTimeout(() => {
         setHasAnimatedGreeting(true)
       }, 1500) // After all animations complete
       return () => clearTimeout(timer)
     }
-  }, [hasAnimatedGreeting, activeDocumentId, isAuthenticated, isAuthLoading])
+  }, [hasAnimatedGreeting, activeDocumentId, activeContractId, isAuthenticated, isAuthLoading])
 
   // Load audits from API
   const loadAudits = async (authToken: string) => {
@@ -74,9 +85,31 @@ function App() {
           documentId: audit.document_id || ''
         }))
         setAudits(formattedAudits)
+      } else if (response.status === 401) {
+        // Token is invalid or expired — clear session and redirect to login
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        setToken(null)
+        setUser(null)
+        setIsAuthenticated(false)
+        navigate('/login')
       }
     } catch (error) {
       console.error('Failed to load audits:', error)
+    }
+  }
+
+  const loadContracts = async (authToken: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/contracts`, {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setContracts(data)
+      }
+    } catch (error) {
+      console.error('Failed to load contracts:', error)
     }
   }
 
@@ -89,8 +122,9 @@ function App() {
       const userData = JSON.parse(storedUser)
       setUser(userData)
       setIsAuthenticated(true)
-      // Load audits when user is logged in
+      // Load audits and contracts when user is logged in
       loadAudits(storedToken)
+      loadContracts(storedToken)
     }
     setIsAuthLoading(false)
   }, [])
@@ -116,8 +150,9 @@ function App() {
     setIsAuthenticated(true)
     localStorage.setItem('token', data.access_token)
     localStorage.setItem('user', JSON.stringify(data.user))
-    // Load audits after login
+    // Load audits and contracts after login
     loadAudits(data.access_token)
+    loadContracts(data.access_token)
     // Navigate to app
     navigate('/app')
   }
@@ -147,6 +182,37 @@ function App() {
     window.location.href = '/login'
   }
 
+  const createContract = async () => {
+    if (!newContractName.trim()) return
+    setIsCreatingContract(true)
+    try {
+      const authToken = token || localStorage.getItem('token')
+      if (!authToken) return
+      const response = await fetch(`${API_BASE_URL}/contracts`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name: newContractName.trim() })
+      })
+      if (response.ok) {
+        const contract = await response.json()
+        setContracts(prev => [contract, ...prev])
+        setActiveContractId(contract.id)
+        setActiveContractName(contract.name)
+        setActiveDocumentId(null)
+        setShowCreateContract(false)
+        setNewContractName('')
+        navigate('/app')
+      }
+    } catch (error) {
+      console.error('Failed to create contract:', error)
+    } finally {
+      setIsCreatingContract(false)
+    }
+  }
+
   // Component wrappers for routing
   const LoginPage = () => (
     <Login
@@ -172,29 +238,13 @@ function App() {
       return <Navigate to="/login" replace />
     }
 
-    // Only animate on first render of the landing page (when no document is active)
-    const shouldAnimateGreeting = !hasAnimatedGreeting && !activeDocumentId
+    // Only animate on first render of the landing page (when no document or contract is active)
+    const shouldAnimateGreeting = !hasAnimatedGreeting && !activeDocumentId && !activeContractId
 
     return (
       <div
         className="h-screen w-screen flex bg-[#C8C8BF] dark:bg-[#1a1a1a] text-[#1A1A1A] dark:text-[#e5e5e5] font-sans overflow-hidden relative transition-colors duration-300"
-        onDragEnter={handleDragEnter}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
       >
-        {/* Background Blur Overlay when dragging */}
-        <AnimatePresence>
-          {isDragging && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 backdrop-blur-sm bg-black/20 z-40 pointer-events-none"
-            />
-          )}
-        </AnimatePresence>
-
         {/* Sidebar - Management View */}
         <motion.div
           initial={{ width: isSidebarCollapsed ? 80 : 320 }}
@@ -232,54 +282,59 @@ function App() {
             </motion.div>
           </div>
 
-          {/* Recent Audits */}
+          {/* Contracts List */}
           {!isSidebarCollapsed && (
             <div className="flex-1 overflow-y-auto p-4">
-              <p className="text-xs text-[#2a2a2a]/60 dark:text-white/60 mb-3 px-2">RECENT AUDITS</p>
+              <div className="flex items-center justify-between mb-3 px-2">
+                <p className="text-xs text-[#2a2a2a]/60 dark:text-white/60">CONTRACTS</p>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setShowCreateContract(true)}
+                  className="text-xs px-2 py-1 bg-[#6f8f88]/20 text-[#6f8f88] rounded-lg hover:bg-[#6f8f88]/30 transition-colors"
+                >
+                  + New
+                </motion.button>
+              </div>
               <motion.div
                 className="space-y-2"
                 initial="hidden"
                 animate="visible"
-                variants={{
-                  visible: {
-                    transition: {
-                      staggerChildren: 0.05
-                    }
-                  }
-                }}
+                variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
               >
-                {audits.length === 0 ? (
-                  <p className="text-xs text-[#2a2a2a]/40 dark:text-white/40 px-2 py-4 text-center">No audits yet</p>
+                {contracts.length === 0 ? (
+                  <p className="text-xs text-[#2a2a2a]/40 dark:text-white/40 px-2 py-4 text-center">No contracts yet</p>
                 ) : (
-                  audits.map(audit => (
+                  contracts.map(contract => (
                     <motion.div
-                      key={audit.id}
-                      variants={{
-                        hidden: { opacity: 0, y: 20 },
-                        visible: { opacity: 1, y: 0 }
-                      }}
+                      key={contract.id}
+                      variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
                       whileHover={{ scale: 1.02, x: 4 }}
                       transition={springConfig}
-                      onClick={() => openAudit(audit)}
-                      className="p-4 rounded-xl backdrop-blur-sm bg-white/30 dark:bg-white/5 border border-black/10 dark:border-white/10 cursor-pointer hover:bg-white/40 dark:hover:bg-white/10 transition-all"
+                      onClick={() => {
+                        setActiveContractId(contract.id)
+                        setActiveContractName(contract.name)
+                        setActiveDocumentId(null)
+                        navigate('/app')
+                      }}
+                      className={`p-4 rounded-xl backdrop-blur-sm border cursor-pointer transition-all ${
+                        activeContractId === contract.id
+                          ? 'bg-[#6f8f88]/20 border-[#6f8f88]/30'
+                          : 'bg-white/30 dark:bg-white/5 border-black/10 dark:border-white/10 hover:bg-white/40 dark:hover:bg-white/10'
+                      }`}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate text-[#1A1A1A] dark:text-white">{audit.name}</p>
+                          <p className="font-medium text-sm truncate text-[#1A1A1A] dark:text-white">{contract.name}</p>
                           <p className="text-xs text-[#2a2a2a]/60 dark:text-white/60 mt-1">
-                            {audit.timestamp.toLocaleTimeString()}
+                            {contract.document_count} file{contract.document_count !== 1 ? 's' : ''}
                           </p>
                         </div>
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                          className={`w-2 h-2 rounded-full ml-2 flex-shrink-0 ${
-                            audit.status === 'clean' ? 'bg-green-500 shadow-md shadow-green-500/50' :
-                            audit.status === 'warning' ? 'bg-yellow-500 shadow-md shadow-yellow-500/50' :
-                            'bg-red-500 shadow-md shadow-red-500/50'
-                          }`}
-                        />
+                        <div className={`w-2 h-2 rounded-full ml-2 flex-shrink-0 mt-1 ${
+                          contract.status === 'complete' ? 'bg-green-500 shadow-md shadow-green-500/50' :
+                          contract.status === 'in_progress' ? 'bg-yellow-500 shadow-md shadow-yellow-500/50' :
+                          'bg-[#6f8f88]/50'
+                        }`} />
                       </div>
                     </motion.div>
                   ))
@@ -346,7 +401,6 @@ function App() {
         <div className="flex-1 flex overflow-hidden relative">
           <AnimatePresence mode="wait">
             {activeDocumentId ? (
-              /* Document Viewer with Content Understander */
               <>
                 <DocumentViewer
                   key={`document-viewer-${activeDocumentId}`}
@@ -361,6 +415,18 @@ function App() {
                   onSpanHover={handleSpanHover}
                 />
               </>
+            ) : activeContractId ? (
+              <ContractWorkspace
+                key={`contract-${activeContractId}`}
+                contractId={activeContractId}
+                contractName={activeContractName}
+                token={token || localStorage.getItem('token') || ''}
+                onFileOpen={(docId) => setActiveDocumentId(docId)}
+                onClose={() => {
+                  setActiveContractId(null)
+                  setActiveContractName('')
+                }}
+              />
             ) : (
               /* Landing State - Upload Portal */
               <motion.div
@@ -375,7 +441,6 @@ function App() {
                   {(() => {
                     const greeting = getGreeting()
                     const wordCount = greeting.split(' ').length
-                    // Use smaller font for longer greetings (5+ words)
                     const fontSize = wordCount >= 5 ? 'text-5xl' : 'text-6xl'
                     return (
                       <h1 className={`${fontSize} font-semibold text-[#1A1A1A] dark:text-white tracking-tight`}>
@@ -384,11 +449,7 @@ function App() {
                             key={index}
                             initial={shouldAnimateGreeting ? { opacity: 0, y: 10 } : false}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={shouldAnimateGreeting ? {
-                              duration: 0.4,
-                              delay: index * 0.1,
-                              ease: "easeOut"
-                            } : { duration: 0 }}
+                            transition={shouldAnimateGreeting ? { duration: 0.4, delay: index * 0.1, ease: "easeOut" } : { duration: 0 }}
                             className="inline-block mr-[0.3em]"
                           >
                             {word}
@@ -403,85 +464,83 @@ function App() {
                     transition={shouldAnimateGreeting ? { duration: 0.7, delay: 0.8 } : { duration: 0 }}
                     className="text-[#2a2a2a]/70 dark:text-white/70 text-lg"
                   >
-                    Drop a document to begin forensic analysis
+                    Create a contract to begin your audit
                   </motion.p>
                 </div>
 
-                {/* Circular Upload Portal */}
+                {/* Create Contract Portal */}
                 <motion.div
                   initial={shouldAnimateGreeting ? { opacity: 0, scale: 0.8 } : false}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={shouldAnimateGreeting ? { duration: 0.7, delay: 1.0, ...springConfig } : { duration: 0 }}
                   className="mt-16"
                 >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                    accept=".pdf,.docx,.doc,.png,.jpg,.jpeg"
-                    disabled={isProcessing}
-                  />
-
-                  <motion.button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isProcessing}
-                    whileHover={{ scale: 1.05, y: -8, boxShadow: '0 35px 60px -15px rgba(0, 0, 0, 0.25)' }}
-                    whileTap={{ scale: 0.95 }}
-                    animate={
-                      isDragging
-                        ? {
-                            borderColor: ['#708090', 'rgba(112, 128, 144, 0.3)', '#708090'],
-                            scale: 1.15,
-                            y: -12
-                          }
-                        : isProcessing
-                        ? {
-                            rotate: 360
-                          }
-                        : {}
-                    }
-                    transition={
-                      isDragging
-                        ? { duration: 2, repeat: Infinity, ease: "easeInOut", type: "spring", stiffness: 100, damping: 20 }
-                        : isProcessing
-                        ? { duration: 2, repeat: Infinity, ease: "linear" }
-                        : { type: "spring", stiffness: 300, damping: 25 }
-                    }
-                    className={`relative w-48 h-48 rounded-full backdrop-blur-md transition-all ${
-                      isDragging
-                        ? 'border-2 border-dashed border-[#708090] bg-white/50 dark:bg-white/20'
-                        : 'border border-black/10 dark:border-white/10 bg-white/30 dark:bg-white/5 hover:bg-white/40 dark:hover:bg-white/10 hover:border-[#6f8f88]/50'
-                    } ${isProcessing ? 'opacity-75 cursor-wait' : 'cursor-pointer'}`}
-                    style={{
-                      boxShadow: isDragging
-                        ? '0 40px 80px -12px rgba(112, 128, 144, 0.5), 0 0 60px rgba(112, 128, 144, 0.3)'
-                        : '0 25px 50px -12px rgba(0, 0, 0, 0.15)'
-                    }}
-                  >
-                    <div className="flex flex-col items-center justify-center h-full gap-3">
+                  <AnimatePresence mode="wait">
+                    {showCreateContract ? (
                       <motion.div
-                        animate={isProcessing ? { scale: [1, 1.2, 1] } : {}}
-                        transition={{ duration: 1.5, repeat: Infinity }}
-                        className="text-6xl"
+                        key="create-form"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="w-72 p-6 rounded-3xl backdrop-blur-md bg-white/30 dark:bg-white/5 border border-black/10 dark:border-white/10"
+                        style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)' }}
                       >
-                        {isProcessing ? '⏳' : '📎'}
+                        <h3 className="text-sm font-semibold text-[#1A1A1A] dark:text-white mb-4">New Contract</h3>
+                        <input
+                          type="text"
+                          value={newContractName}
+                          onChange={e => setNewContractName(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') createContract()
+                            if (e.key === 'Escape') { setShowCreateContract(false); setNewContractName('') }
+                          }}
+                          placeholder="Contract name..."
+                          autoFocus
+                          className="w-full px-3 py-2 text-sm bg-white/50 dark:bg-white/10 border border-black/10 dark:border-white/10 rounded-xl outline-none focus:border-[#6f8f88]/50 text-[#1A1A1A] dark:text-white placeholder-[#2a2a2a]/40 dark:placeholder-white/40 mb-4"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={createContract}
+                            disabled={isCreatingContract || !newContractName.trim()}
+                            className="flex-1 py-2 text-sm bg-[#6f8f88] text-white rounded-xl hover:bg-[#5a7a73] transition-colors disabled:opacity-50"
+                          >
+                            {isCreatingContract ? 'Creating...' : 'Create'}
+                          </button>
+                          <button
+                            onClick={() => { setShowCreateContract(false); setNewContractName('') }}
+                            className="flex-1 py-2 text-sm bg-black/10 dark:bg-white/10 rounded-xl hover:bg-black/20 dark:hover:bg-white/20 transition-colors text-[#1A1A1A] dark:text-white"
+                          >
+                            Cancel
+                          </button>
+                        </div>
                       </motion.div>
-                      <p className="text-[#2a2a2a] dark:text-white/80 text-sm font-medium px-6 text-center">
-                        {isProcessing ? 'Processing...' : isDragging ? 'Drop Here' : 'Upload Document'}
-                      </p>
-                    </div>
-                  </motion.button>
+                    ) : (
+                      <motion.button
+                        key="upload-btn"
+                        onClick={() => setShowCreateContract(true)}
+                        whileHover={{ scale: 1.05, y: -8, boxShadow: '0 35px 60px -15px rgba(0, 0, 0, 0.25)' }}
+                        whileTap={{ scale: 0.95 }}
+                        className="relative w-48 h-48 rounded-full backdrop-blur-md border border-black/10 dark:border-white/10 bg-white/30 dark:bg-white/5 hover:bg-white/40 dark:hover:bg-white/10 hover:border-[#6f8f88]/50 cursor-pointer transition-all"
+                        style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)' }}
+                      >
+                        <div className="flex flex-col items-center justify-center h-full gap-3">
+                          <div className="text-6xl">📁</div>
+                          <p className="text-[#2a2a2a] dark:text-white/80 text-sm font-medium px-6 text-center">
+                            Upload Contract
+                          </p>
+                        </div>
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
 
-                {/* Supported formats hint */}
                 <motion.p
                   initial={shouldAnimateGreeting ? { opacity: 0 } : false}
                   animate={{ opacity: 1 }}
                   transition={shouldAnimateGreeting ? { duration: 0.7, delay: 1.2 } : { duration: 0 }}
                   className="mt-8 text-xs text-[#2a2a2a]/50 dark:text-white/50"
                 >
-                  Supports: PDF, DOCX, DOC, PNG, JPG
+                  Supports folders, ZIP archives, PDF, DOCX, images
                 </motion.p>
               </motion.div>
             )}
@@ -491,10 +550,10 @@ function App() {
     )
   }
 
-  const handleSpanHover = (spanId: string | null, span?: any) => {
+  const handleSpanHover = useCallback((spanId: string | null, span?: any) => {
     setActiveSpanId(spanId)
     setActiveSpan(span || null)
-  }
+  }, [])
 
   const getGreeting = () => {
     const firstName = user?.username?.split(' ')[0] || user?.username || ''
@@ -504,7 +563,7 @@ function App() {
       'Hey there', 'Hello', 'Hi', 'Howdy', 'Welcome back',
       'Good to see you', 'Aloha', 'Great to have you', 'Nice to see you', 'Welcome',
       'What\'s up', 'Yo', 'Hey', 'Hiya', 'Greetings',
-      'Ahoy', 'Salutations', 'Well hello there', 
+      'Ahoy', 'Salutations', 'Well hello there',
       'There you are', 'Hey hey', 'Hi there', 'Hello there',
       'Good day', 'Lovely to see you', 'Great to see you back',
       'Welcome aboard', 'Hey friend', 'Hello friend', 'Hi friend',
@@ -525,127 +584,13 @@ function App() {
     return firstName ? `${greeting}, ${firstName}!` : `${greeting}!`
   }
 
-  const handleDragEnter = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragging(true)
-  }
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (e.currentTarget === e.target) {
-      setIsDragging(false)
-    }
-  }
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-  }
-
-  const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragging(false)
-
-    const files = Array.from(e.dataTransfer.files)
-    if (files.length > 0) {
-      await uploadDocument(files[0])
-    }
-  }
-
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      await uploadDocument(e.target.files[0])
-    }
-  }
-
-  const uploadDocument = async (file: File) => {
-    setIsProcessing(true)
-
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-
-      // Get token from state or fallback to localStorage
-      const authToken = token || localStorage.getItem('token')
-      if (!authToken) {
-        throw new Error('No authentication token found')
-      }
-
-      const response = await fetch(`${API_BASE_URL}/upload/upload`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: formData
-      })
-
-      if (!response.ok) {
-        throw new Error('Upload failed')
-      }
-
-      const data = await response.json()
-
-      // Save audit to database
-      try {
-        const auditResponse = await fetch(`${API_BASE_URL}/audits`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${authToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            name: file.name,
-            document_id: data.id,
-            status: 'clean'
-          })
-        })
-
-        if (auditResponse.ok) {
-          const auditData = await auditResponse.json()
-          const newAudit: Audit = {
-            id: auditData.id,
-            name: auditData.name,
-            timestamp: new Date(auditData.created_at),
-            status: auditData.status as 'clean' | 'warning' | 'flagged',
-            documentId: auditData.document_id || ''
-          }
-          setAudits([newAudit, ...audits])
-        }
-      } catch (error) {
-        console.error('Failed to save audit:', error)
-        // Still show the audit locally even if save fails
-        const newAudit: Audit = {
-          id: Date.now().toString(),
-          name: file.name,
-          timestamp: new Date(),
-          status: 'clean',
-          documentId: data.id
-        }
-        setAudits([newAudit, ...audits])
-      }
-
-      setActiveDocumentId(data.id)
-
-    } catch (error) {
-      console.error('Upload error:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      alert(`Failed to upload document: ${errorMessage}`)
-    } finally {
-      setIsProcessing(false)
-    }
-  }
-
-  const openAudit = (audit: Audit) => {
-    setActiveDocumentId(audit.documentId)
-  }
-
-  const closeDocument = () => {
+  const closeDocument = useCallback(() => {
     setActiveDocumentId(null)
-    setHasAnimatedGreeting(false) // Reset animation when returning to landing page
-  }
+    // Only reset greeting animation when returning to full landing (no active contract either)
+    if (!activeContractId) {
+      setHasAnimatedGreeting(false)
+    }
+  }, [activeContractId])
 
   const springConfig = {
     type: "spring" as const,

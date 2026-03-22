@@ -67,7 +67,15 @@ async def upload_document(
         canonical_path, doc_type = normalizer.normalize(temp_path)
 
         # Step 4: Parse into spans
-        spans = parser.parse(canonical_path) if doc_type in ['pdf', 'docx'] else []
+        # For PDFs, pass the original path so OCR can be used as fallback for scanned docs
+        if doc_type == 'pdf':
+            spans = parser.parse(original_path)
+        elif doc_type == 'docx':
+            spans = parser.parse(canonical_path)
+        elif doc_type == 'image':
+            spans = parser.parse(original_path)  # Use OCR for images
+        else:
+            spans = []
 
         # Step 5: Store document in database
         db_document = DocumentModel(

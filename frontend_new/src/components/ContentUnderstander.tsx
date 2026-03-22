@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo, useRef } from 'react'
 
 interface ContentUnderstanderProps {
   documentId: string
@@ -42,7 +42,7 @@ interface DocumentContext {
   context_entities: ContextEntity
 }
 
-export function ContentUnderstander({ documentId, onSpanHover }: ContentUnderstanderProps) {
+export const ContentUnderstander = memo(function ContentUnderstander({ documentId, onSpanHover }: ContentUnderstanderProps) {
   const [spans, setSpans] = useState<DocumentSpan[]>([])
   const [context, setContext] = useState<DocumentContext | null>(null)
   const [isLoadingSpans, setIsLoadingSpans] = useState(true)
@@ -58,10 +58,14 @@ export function ContentUnderstander({ documentId, onSpanHover }: ContentUndersta
     }
   }
 
+  // Fetch spans - runs once on mount
   useEffect(() => {
+    let isMounted = true
+
     const fetchSpans = async () => {
       try {
         setIsLoadingSpans(true)
+
         const response = await fetch(`http://localhost:8002/api/v1/documents/${documentId}/spans`)
 
         if (!response.ok) {
@@ -69,9 +73,13 @@ export function ContentUnderstander({ documentId, onSpanHover }: ContentUndersta
         }
 
         const data = await response.json()
+
+        if (!isMounted) return
+
         setSpans(data.spans || [])
         setIsLoadingSpans(false)
       } catch (err) {
+        if (!isMounted) return
         console.error('Error fetching spans:', err)
         setError(err instanceof Error ? err.message : 'Unknown error')
         setIsLoadingSpans(false)
@@ -79,7 +87,9 @@ export function ContentUnderstander({ documentId, onSpanHover }: ContentUndersta
     }
 
     fetchSpans()
-  }, [documentId])
+
+    return () => { isMounted = false }
+  }, []) // Empty deps - only run on mount
 
   const analyzeContext = async () => {
     try {
@@ -366,4 +376,4 @@ export function ContentUnderstander({ documentId, onSpanHover }: ContentUndersta
       </div>
     </motion.div>
   )
-}
+})

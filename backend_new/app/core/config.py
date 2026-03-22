@@ -30,7 +30,7 @@ class Settings(BaseSettings):
 
     # File Processing
     MAX_FILE_SIZE_MB: int = 50
-    ALLOWED_EXTENSIONS: set[str] = {".pdf", ".docx", ".doc", ".png", ".jpg", ".jpeg"}
+    ALLOWED_EXTENSIONS: set[str] = {".pdf", ".docx", ".doc", ".png", ".jpg", ".jpeg", ".zip"}
 
     # Groq API
     GROQ_API_KEY: Optional[str] = None
