@@ -16,6 +16,7 @@ def init_db():
         for stmt in [
             "ALTER TABLE documents ADD COLUMN contract_id CHAR(36)",
             "ALTER TABLE documents ADD COLUMN folder_id CHAR(36)",
+            "ALTER TABLE contracts ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0",
         ]:
             try:
                 conn.execute(text(stmt))

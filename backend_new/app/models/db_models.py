@@ -142,6 +142,7 @@ class ContractModel(Base):
     user_id = Column(UUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String(255), nullable=False)
     status = Column(String(20), nullable=False, default="pending")  # pending, in_progress, complete
+    pinned = Column(Integer, nullable=False, default=0)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 

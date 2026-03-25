@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DocumentViewer } from './components/DocumentViewer'
@@ -10,7 +10,212 @@ import { LandingPage } from './components/landing'
 import { ThemeToggle } from './components/ThemeToggle'
 import { ContractWorkspace } from './components/ContractWorkspace'
 
-const API_BASE_URL = 'http://localhost:8002/api/v1'
+const API_BASE_URL_CONST = 'http://localhost:8002/api/v1'
+
+interface ContractCreated {
+  id: string
+  name: string
+  status: string
+  pinned: boolean
+  created_at: string
+  document_count: number
+}
+
+// Isolated component — owns its own state so typing never triggers App re-renders
+function ContractPortal({ token, onCreated }: {
+  token: string | null
+  onCreated: (contract: ContractCreated, files?: File[]) => void
+}) {
+  const [mode, setMode] = useState<'default' | 'new-form'>('default')
+  const [name, setName] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [uploadDragging, setUploadDragging] = useState(false)
+  const [uploadLoading, setUploadLoading] = useState(false)
+  const uploadDragCounter = useState(0)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const createEmpty = async () => {
+    if (!name.trim() || !token) return
+    setLoading(true)
+    try {
+      const res = await fetch(`${API_BASE_URL_CONST}/contracts`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim() })
+      })
+      if (res.ok) {
+        const contract = await res.json()
+        setName('')
+        setMode('default')
+        onCreated(contract)
+      }
+    } catch (e) {
+      console.error('Failed to create contract', e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const createFromFiles = async (files: File[]) => {
+    if (!files.length || !token) return
+    setUploadLoading(true)
+    try {
+      // Name contract after the first file, stripping extension
+      const rawName = files[0].name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ')
+      const contractName = rawName.charAt(0).toUpperCase() + rawName.slice(1)
+      const res = await fetch(`${API_BASE_URL_CONST}/contracts`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: contractName })
+      })
+      if (res.ok) {
+        const contract = await res.json()
+        onCreated(contract, files)
+      }
+    } catch (e) {
+      console.error('Failed to create contract from files', e)
+    } finally {
+      setUploadLoading(false)
+    }
+  }
+
+  const handleUploadDrop = async (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    uploadDragCounter[1](0)
+    setUploadDragging(false)
+    const files = Array.from(e.dataTransfer.files)
+    if (files.length) await createFromFiles(files)
+  }
+
+  const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.length) {
+      await createFromFiles(Array.from(e.target.files))
+      e.target.value = ''
+    }
+  }
+
+  const cardBase = "relative flex flex-col items-center justify-center gap-3 w-44 h-44 rounded-3xl backdrop-blur-md border cursor-pointer transition-all select-none"
+  const cardStyle = { boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)' }
+
+  return (
+    <div className="flex items-start gap-5">
+      {/* ── New Contract card ── */}
+      <AnimatePresence mode="wait">
+        {mode === 'new-form' ? (
+          <motion.div
+            key="new-form"
+            initial={{ opacity: 0, scale: 0.95, width: 176 }}
+            animate={{ opacity: 1, scale: 1, width: 288 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="p-5 rounded-3xl backdrop-blur-md bg-white/30 dark:bg-white/5 border border-black/10 dark:border-white/10 overflow-hidden"
+            style={cardStyle}
+          >
+            <p className="text-xs font-semibold text-[#2a2a2a]/60 dark:text-white/50 mb-3 uppercase tracking-wide">New Contract</p>
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') createEmpty()
+                if (e.key === 'Escape') { setMode('default'); setName('') }
+              }}
+              placeholder="Contract name..."
+              autoFocus
+              className="w-full px-3 py-2 text-sm bg-white/50 dark:bg-white/10 border border-black/10 dark:border-white/10 rounded-xl outline-none focus:border-[#6f8f88]/50 text-[#1A1A1A] dark:text-white placeholder-[#2a2a2a]/40 dark:placeholder-white/40 mb-3"
+            />
+            <div className="flex gap-2 w-full">
+              <motion.button
+                onClick={createEmpty}
+                disabled={loading || !name.trim()}
+                whileHover={{ scale: 1.02, boxShadow: '0 0 20px rgba(111,143,136,0.5)' }}
+                whileTap={{ scale: 0.97 }}
+                className="flex-1 py-2 text-sm bg-[#6f8f88] text-white rounded-xl disabled:opacity-50"
+              >
+                {loading ? 'Creating...' : 'Create'}
+              </motion.button>
+              <button
+                onClick={() => { setMode('default'); setName('') }}
+                className="flex-1 py-2 text-sm bg-black/10 dark:bg-white/10 rounded-xl hover:bg-black/20 dark:hover:bg-white/20 transition-colors text-[#1A1A1A] dark:text-white"
+              >
+                Cancel
+              </button>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.button
+            key="new-btn"
+            onClick={() => setMode('new-form')}
+            whileHover={{ scale: 1.05, y: -6, boxShadow: '0 30px 60px -12px rgba(0,0,0,0.2), 0 0 30px rgba(111,143,136,0.15)' }}
+            whileTap={{ scale: 0.95 }}
+            className={`${cardBase} bg-white/30 dark:bg-white/5 border-black/10 dark:border-white/10 hover:bg-white/40 dark:hover:bg-white/10 hover:border-[#6f8f88]/40`}
+            style={cardStyle}
+          >
+            <div className="text-5xl">📁</div>
+            <p className="text-[#2a2a2a] dark:text-white/80 text-sm font-medium text-center">New Contract</p>
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* ── Upload card ── */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={handleFileInput}
+        accept=".pdf,.docx,.doc,.png,.jpg,.jpeg,.zip"
+      />
+      <motion.div
+        onClick={() => !uploadLoading && fileInputRef.current?.click()}
+        onDragEnter={e => {
+          e.preventDefault(); e.stopPropagation()
+          uploadDragCounter[1](c => c + 1)
+          setUploadDragging(true)
+        }}
+        onDragLeave={e => {
+          e.preventDefault(); e.stopPropagation()
+          uploadDragCounter[1](c => {
+            const next = c - 1
+            if (next <= 0) setUploadDragging(false)
+            return next
+          })
+        }}
+        onDragOver={e => { e.preventDefault(); e.stopPropagation() }}
+        onDrop={handleUploadDrop}
+        whileHover={!uploadLoading ? { scale: 1.05, y: -6, boxShadow: '0 30px 60px -12px rgba(0,0,0,0.2), 0 0 30px rgba(111,143,136,0.15)' } : {}}
+        whileTap={!uploadLoading ? { scale: 0.95 } : {}}
+        animate={uploadDragging ? { scale: 1.08, borderColor: '#6f8f88' } : {}}
+        className={`${cardBase} ${
+          uploadDragging
+            ? 'border-dashed border-[#6f8f88] bg-[#6f8f88]/10'
+            : 'border-black/10 dark:border-white/10 bg-white/30 dark:bg-white/5 hover:bg-white/40 dark:hover:bg-white/10 hover:border-[#6f8f88]/40'
+        } ${uploadLoading ? 'cursor-wait' : ''}`}
+        style={cardStyle}
+      >
+        {uploadLoading ? (
+          <>
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }} className="text-5xl">⏳</motion.div>
+            <p className="text-[#2a2a2a] dark:text-white/80 text-sm font-medium text-center">Creating...</p>
+          </>
+        ) : (
+          <>
+            <div className="text-5xl">{uploadDragging ? '📂' : '⬆️'}</div>
+            <p className="text-[#2a2a2a] dark:text-white/80 text-sm font-medium text-center">
+              {uploadDragging ? 'Drop it!' : 'Upload'}
+            </p>
+            <p className="text-xs text-[#2a2a2a]/40 dark:text-white/40 text-center px-2">
+              Files, folders, ZIP
+            </p>
+          </>
+        )}
+      </motion.div>
+    </div>
+  )
+}
+
+const API_BASE_URL = API_BASE_URL_CONST
 
 interface User {
   id: string
@@ -32,8 +237,86 @@ interface Contract {
   id: string
   name: string
   status: string
+  pinned: boolean
   created_at: string
   document_count: number
+}
+
+// Defined OUTSIDE App so its type identity is stable — no remount on App re-renders
+function ContractItem({ contract, isActive, onOpen, onPin, onDelete }: {
+  contract: Contract
+  isActive: boolean
+  onOpen: () => void
+  onPin: (pinned: boolean) => void
+  onDelete: () => void
+}) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const handler = (e: MouseEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [menuOpen])
+
+  return (
+    <div className="relative group">
+      <motion.div
+        variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+        whileHover={{ scale: 1.02, x: 4 }}
+        onClick={onOpen}
+        className={`p-3 rounded-xl backdrop-blur-sm border cursor-pointer transition-all ${
+          isActive
+            ? 'bg-[#6f8f88]/20 border-[#6f8f88]/30'
+            : 'bg-white/30 dark:bg-white/5 border-black/10 dark:border-white/10 hover:bg-white/40 dark:hover:bg-white/10'
+        }`}
+      >
+        <div className="flex items-start gap-2">
+          <div className="flex-1 min-w-0 pr-5">
+            <p className="font-medium text-sm truncate text-[#1A1A1A] dark:text-white">{contract.name}</p>
+            <p className="text-xs text-[#2a2a2a]/60 dark:text-white/60 mt-0.5">
+              {contract.document_count} file{contract.document_count !== 1 ? 's' : ''}
+            </p>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Three-dot button */}
+      <button
+        onClick={e => { e.stopPropagation(); setMenuOpen(v => !v) }}
+        className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-black/10 dark:hover:bg-white/10 transition-all text-[#2a2a2a]/60 dark:text-white/60 text-xs leading-none"
+      >
+        •••
+      </button>
+
+      {/* Dropdown menu */}
+      {menuOpen && (
+        <div
+          ref={menuRef}
+          className="absolute right-0 top-full mt-1 z-50 w-36 rounded-xl overflow-hidden backdrop-blur-xl bg-white/80 dark:bg-[#2a2a2a]/90 border border-black/10 dark:border-white/10 shadow-xl"
+        >
+          <button
+            onClick={e => { e.stopPropagation(); onPin(!contract.pinned); setMenuOpen(false) }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1A1A1A] dark:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-left"
+          >
+            <span>📌</span>
+            {contract.pinned ? 'Unpin' : 'Pin'}
+          </button>
+          <div className="h-px bg-black/10 dark:bg-white/10" />
+          <button
+            onClick={e => { e.stopPropagation(); onDelete(); setMenuOpen(false) }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left"
+          >
+            <span>🗑️</span>
+            Delete
+          </button>
+        </div>
+      )}
+    </div>
+  )
 }
 
 function App() {
@@ -46,9 +329,6 @@ function App() {
   const [contracts, setContracts] = useState<Contract[]>([])
   const [activeContractId, setActiveContractId] = useState<string | null>(null)
   const [activeContractName, setActiveContractName] = useState<string>('')
-  const [showCreateContract, setShowCreateContract] = useState(false)
-  const [newContractName, setNewContractName] = useState('')
-  const [isCreatingContract, setIsCreatingContract] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null)
   const [activeSpanId, setActiveSpanId] = useState<string | null>(null)
@@ -182,35 +462,52 @@ function App() {
     window.location.href = '/login'
   }
 
-  const createContract = async () => {
-    if (!newContractName.trim()) return
-    setIsCreatingContract(true)
+  const pendingFilesRef = useRef<File[]>([])
+
+  const pinContract = async (contractId: string, pinned: boolean) => {
+    const tok = token || localStorage.getItem('token')
+    if (!tok) return
     try {
-      const authToken = token || localStorage.getItem('token')
-      if (!authToken) return
-      const response = await fetch(`${API_BASE_URL}/contracts`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name: newContractName.trim() })
+      const res = await fetch(`${API_BASE_URL}/contracts/${contractId}/pin`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pinned })
       })
-      if (response.ok) {
-        const contract = await response.json()
-        setContracts(prev => [contract, ...prev])
-        setActiveContractId(contract.id)
-        setActiveContractName(contract.name)
-        setActiveDocumentId(null)
-        setShowCreateContract(false)
-        setNewContractName('')
-        navigate('/app')
+      if (res.ok) {
+        setContracts(prev => prev.map(c => c.id === contractId ? { ...c, pinned } : c))
       }
-    } catch (error) {
-      console.error('Failed to create contract:', error)
-    } finally {
-      setIsCreatingContract(false)
+    } catch (e) {
+      console.error('Failed to pin contract', e)
     }
+  }
+
+  const deleteContractItem = async (contractId: string) => {
+    const tok = token || localStorage.getItem('token')
+    if (!tok) return
+    try {
+      const res = await fetch(`${API_BASE_URL}/contracts/${contractId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${tok}` }
+      })
+      if (res.ok) {
+        setContracts(prev => prev.filter(c => c.id !== contractId))
+        if (activeContractId === contractId) {
+          setActiveContractId(null)
+          setActiveContractName('')
+        }
+      }
+    } catch (e) {
+      console.error('Failed to delete contract', e)
+    }
+  }
+
+  const handleContractCreated = (contract: ContractCreated, files?: File[]) => {
+    pendingFilesRef.current = files ?? []
+    setContracts(prev => [contract, ...prev])
+    setActiveContractId(contract.id)
+    setActiveContractName(contract.name)
+    setActiveDocumentId(null)
+    navigate('/app')
   }
 
   // Component wrappers for routing
@@ -253,9 +550,9 @@ function App() {
           className="relative backdrop-blur-md bg-[#b8b8af]/90 dark:bg-[#252525]/90 border-r border-black/10 dark:border-white/10 flex flex-col shadow-lg z-10"
         >
           {/* Header */}
-          <div className="p-6 border-b border-black/10 dark:border-white/10">
+          <div className="p-4 border-b border-black/10 dark:border-white/10">
             <motion.div
-              className="flex items-center justify-between"
+              className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-between'}`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             >
@@ -268,8 +565,8 @@ function App() {
                   Authentia AI
                 </motion.h2>
               )}
-              <div className="flex items-center gap-2">
-                <ThemeToggle />
+              <div className={`flex items-center ${isSidebarCollapsed ? 'flex-col gap-3' : 'flex-row gap-2'}`}>
+                {!isSidebarCollapsed && <ThemeToggle />}
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
@@ -278,6 +575,7 @@ function App() {
                 >
                   {isSidebarCollapsed ? '→' : '←'}
                 </motion.button>
+                {isSidebarCollapsed && <ThemeToggle />}
               </div>
             </motion.div>
           </div>
@@ -290,56 +588,71 @@ function App() {
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  onClick={() => setShowCreateContract(true)}
+                  onClick={() => { setActiveContractId(null); setActiveContractName(''); setActiveDocumentId(null) }}
                   className="text-xs px-2 py-1 bg-[#6f8f88]/20 text-[#6f8f88] rounded-lg hover:bg-[#6f8f88]/30 transition-colors"
                 >
                   + New
                 </motion.button>
               </div>
-              <motion.div
-                className="space-y-2"
-                initial="hidden"
-                animate="visible"
-                variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
-              >
-                {contracts.length === 0 ? (
-                  <p className="text-xs text-[#2a2a2a]/40 dark:text-white/40 px-2 py-4 text-center">No contracts yet</p>
-                ) : (
-                  contracts.map(contract => (
-                    <motion.div
-                      key={contract.id}
-                      variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-                      whileHover={{ scale: 1.02, x: 4 }}
-                      transition={springConfig}
-                      onClick={() => {
-                        setActiveContractId(contract.id)
-                        setActiveContractName(contract.name)
-                        setActiveDocumentId(null)
-                        navigate('/app')
-                      }}
-                      className={`p-4 rounded-xl backdrop-blur-sm border cursor-pointer transition-all ${
-                        activeContractId === contract.id
-                          ? 'bg-[#6f8f88]/20 border-[#6f8f88]/30'
-                          : 'bg-white/30 dark:bg-white/5 border-black/10 dark:border-white/10 hover:bg-white/40 dark:hover:bg-white/10'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate text-[#1A1A1A] dark:text-white">{contract.name}</p>
-                          <p className="text-xs text-[#2a2a2a]/60 dark:text-white/60 mt-1">
-                            {contract.document_count} file{contract.document_count !== 1 ? 's' : ''}
-                          </p>
-                        </div>
-                        <div className={`w-2 h-2 rounded-full ml-2 flex-shrink-0 mt-1 ${
-                          contract.status === 'complete' ? 'bg-green-500 shadow-md shadow-green-500/50' :
-                          contract.status === 'in_progress' ? 'bg-yellow-500 shadow-md shadow-yellow-500/50' :
-                          'bg-[#6f8f88]/50'
-                        }`} />
+              {contracts.length === 0 ? (
+                <p className="text-xs text-[#2a2a2a]/40 dark:text-white/40 px-2 py-4 text-center">No contracts yet</p>
+              ) : (
+                <motion.div
+                  className="space-y-4"
+                  initial="hidden"
+                  animate="visible"
+                  variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
+                >
+                  {contracts.filter(c => c.pinned).length > 0 && (
+                    <div>
+                      <p className="text-xs text-[#2a2a2a]/50 dark:text-white/40 px-2 mb-2 flex items-center gap-1">
+                        <span>📌</span> PINNED
+                      </p>
+                      <div className="space-y-2">
+                        {contracts.filter(c => c.pinned).map(contract => (
+                          <ContractItem
+                            key={contract.id}
+                            contract={contract}
+                            isActive={activeContractId === contract.id}
+                            onOpen={() => {
+                              setActiveContractId(contract.id)
+                              setActiveContractName(contract.name)
+                              setActiveDocumentId(null)
+                              navigate('/app')
+                            }}
+                            onPin={(pinned) => pinContract(contract.id, pinned)}
+                            onDelete={() => deleteContractItem(contract.id)}
+                          />
+                        ))}
                       </div>
-                    </motion.div>
-                  ))
-                )}
-              </motion.div>
+                    </div>
+                  )}
+                  {contracts.filter(c => !c.pinned).length > 0 && (
+                    <div>
+                      {contracts.filter(c => c.pinned).length > 0 && (
+                        <p className="text-xs text-[#2a2a2a]/50 dark:text-white/40 px-2 mb-2">CONTRACTS</p>
+                      )}
+                      <div className="space-y-2">
+                        {contracts.filter(c => !c.pinned).map(contract => (
+                          <ContractItem
+                            key={contract.id}
+                            contract={contract}
+                            isActive={activeContractId === contract.id}
+                            onOpen={() => {
+                              setActiveContractId(contract.id)
+                              setActiveContractName(contract.name)
+                              setActiveDocumentId(null)
+                              navigate('/app')
+                            }}
+                            onPin={(pinned) => pinContract(contract.id, pinned)}
+                            onDelete={() => deleteContractItem(contract.id)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              )}
             </div>
           )}
 
@@ -421,6 +734,7 @@ function App() {
                 contractId={activeContractId}
                 contractName={activeContractName}
                 token={token || localStorage.getItem('token') || ''}
+                initialFiles={pendingFilesRef.current}
                 onFileOpen={(docId) => setActiveDocumentId(docId)}
                 onClose={() => {
                   setActiveContractId(null)
@@ -475,63 +789,10 @@ function App() {
                   transition={shouldAnimateGreeting ? { duration: 0.7, delay: 1.0, ...springConfig } : { duration: 0 }}
                   className="mt-16"
                 >
-                  <AnimatePresence mode="wait">
-                    {showCreateContract ? (
-                      <motion.div
-                        key="create-form"
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        className="w-72 p-6 rounded-3xl backdrop-blur-md bg-white/30 dark:bg-white/5 border border-black/10 dark:border-white/10"
-                        style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)' }}
-                      >
-                        <h3 className="text-sm font-semibold text-[#1A1A1A] dark:text-white mb-4">New Contract</h3>
-                        <input
-                          type="text"
-                          value={newContractName}
-                          onChange={e => setNewContractName(e.target.value)}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') createContract()
-                            if (e.key === 'Escape') { setShowCreateContract(false); setNewContractName('') }
-                          }}
-                          placeholder="Contract name..."
-                          autoFocus
-                          className="w-full px-3 py-2 text-sm bg-white/50 dark:bg-white/10 border border-black/10 dark:border-white/10 rounded-xl outline-none focus:border-[#6f8f88]/50 text-[#1A1A1A] dark:text-white placeholder-[#2a2a2a]/40 dark:placeholder-white/40 mb-4"
-                        />
-                        <div className="flex gap-2">
-                          <button
-                            onClick={createContract}
-                            disabled={isCreatingContract || !newContractName.trim()}
-                            className="flex-1 py-2 text-sm bg-[#6f8f88] text-white rounded-xl hover:bg-[#5a7a73] transition-colors disabled:opacity-50"
-                          >
-                            {isCreatingContract ? 'Creating...' : 'Create'}
-                          </button>
-                          <button
-                            onClick={() => { setShowCreateContract(false); setNewContractName('') }}
-                            className="flex-1 py-2 text-sm bg-black/10 dark:bg-white/10 rounded-xl hover:bg-black/20 dark:hover:bg-white/20 transition-colors text-[#1A1A1A] dark:text-white"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </motion.div>
-                    ) : (
-                      <motion.button
-                        key="upload-btn"
-                        onClick={() => setShowCreateContract(true)}
-                        whileHover={{ scale: 1.05, y: -8, boxShadow: '0 35px 60px -15px rgba(0, 0, 0, 0.25)' }}
-                        whileTap={{ scale: 0.95 }}
-                        className="relative w-48 h-48 rounded-full backdrop-blur-md border border-black/10 dark:border-white/10 bg-white/30 dark:bg-white/5 hover:bg-white/40 dark:hover:bg-white/10 hover:border-[#6f8f88]/50 cursor-pointer transition-all"
-                        style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)' }}
-                      >
-                        <div className="flex flex-col items-center justify-center h-full gap-3">
-                          <div className="text-6xl">📁</div>
-                          <p className="text-[#2a2a2a] dark:text-white/80 text-sm font-medium px-6 text-center">
-                            Upload Contract
-                          </p>
-                        </div>
-                      </motion.button>
-                    )}
-                  </AnimatePresence>
+                  <ContractPortal
+                    token={token}
+                    onCreated={handleContractCreated}
+                  />
                 </motion.div>
 
                 <motion.p
