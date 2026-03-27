@@ -521,7 +521,6 @@ async def upload_zip(
     if not file.filename.lower().endswith('.zip'):
         raise HTTPException(status_code=400, detail="File must be a ZIP archive")
 
-    # Validate parent folder
     parent_folder_id = None
     if folder_id:
         parent_folder = db.query(ContractFolderModel).filter(
@@ -532,11 +531,13 @@ async def upload_zip(
             raise HTTPException(status_code=404, detail="Parent folder not found")
         parent_folder_id = parent_folder.id
 
+    loop = asyncio.get_event_loop()
+
     with tempfile.TemporaryDirectory() as tmp_dir:
-        # Save and extract ZIP
+        # OPT 1: non-blocking upload write — frees the event loop while reading large uploads
         zip_path = Path(tmp_dir) / "upload.zip"
         with zip_path.open("wb") as buf:
-            shutil.copyfileobj(file.file, buf)
+            await loop.run_in_executor(None, shutil.copyfileobj, file.file, buf)
 
         try:
             with zipfile.ZipFile(zip_path, 'r') as zf:
@@ -546,73 +547,107 @@ async def upload_zip(
 
         zip_path.unlink()
 
+        # Pass 1: walk the tree, create folder records (must stay sequential — parents before children),
+        # and collect every file that needs storing.
         folder_path_map: dict = {}
-        processed_docs = []
-        skipped = []
-        timed_out = False
+        pending: list = []   # (file_path, filename, folder_id, file_size)
+        skipped: list = []
 
-        async def _process_all():
-            for root, dirs, files in os.walk(tmp_dir):
-                dirs[:] = [d for d in dirs if not d.startswith('__') and not d.startswith('.')]
-                rel_root = os.path.relpath(root, tmp_dir)
+        for root, dirs, files in os.walk(tmp_dir):
+            dirs[:] = [d for d in dirs if not d.startswith('__') and not d.startswith('.')]
+            rel_root = os.path.relpath(root, tmp_dir)
 
-                if rel_root != '.':
-                    parent_rel = os.path.dirname(rel_root)
-                    par_id = parent_folder_id if parent_rel == '.' else folder_path_map.get(parent_rel)
-                    folder_name = os.path.basename(rel_root)
-                    folder_model = db.query(ContractFolderModel).filter(
-                        ContractFolderModel.contract_id == contract.id,
-                        ContractFolderModel.parent_id == par_id,
-                        ContractFolderModel.name == folder_name
-                    ).first()
-                    if not folder_model:
-                        folder_model = ContractFolderModel(
-                            contract_id=contract.id, parent_id=par_id, name=folder_name
-                        )
-                        db.add(folder_model)
-                        db.flush()
-                    folder_path_map[rel_root] = folder_model.id
-                    current_folder_id = folder_model.id
-                else:
-                    current_folder_id = parent_folder_id
-
-                for filename in files:
-                    if filename.startswith('.') or filename.startswith('__'):
-                        continue
-                    if filename.lower().endswith('.zip'):
-                        continue
-                    file_path = Path(root) / filename
-                    file_size = file_path.stat().st_size
-                    # Skip if an identical filename already exists at this location
-                    existing = db.query(DocumentModel).filter(
-                        DocumentModel.contract_id == contract.id,
-                        DocumentModel.folder_id == current_folder_id,
-                        DocumentModel.original_filename == filename,
-                    ).first()
-                    if existing:
-                        skipped.append(filename)
-                        continue
-                    doc = await _store_file_raw(
-                        file_path, filename, file_size,
-                        contract.id, current_folder_id, current_user.id, db
+            if rel_root != '.':
+                parent_rel = os.path.dirname(rel_root)
+                par_id = parent_folder_id if parent_rel == '.' else folder_path_map.get(parent_rel)
+                folder_name = os.path.basename(rel_root)
+                folder_model = db.query(ContractFolderModel).filter(
+                    ContractFolderModel.contract_id == contract.id,
+                    ContractFolderModel.parent_id == par_id,
+                    ContractFolderModel.name == folder_name
+                ).first()
+                if not folder_model:
+                    folder_model = ContractFolderModel(
+                        contract_id=contract.id, parent_id=par_id, name=folder_name
                     )
-                    if doc:
-                        processed_docs.append(doc)
-                    else:
-                        skipped.append(filename)
+                    db.add(folder_model)
+                    db.flush()
+                folder_path_map[rel_root] = folder_model.id
+                current_folder_id = folder_model.id
+            else:
+                current_folder_id = parent_folder_id
 
-        try:
-            await asyncio.wait_for(_process_all(), timeout=120.0)
-        except asyncio.TimeoutError:
-            timed_out = True
-            print(f"ZIP upload timed out after 2 minutes — committing {len(processed_docs)} processed files")
+            for filename in files:
+                if filename.startswith('.') or filename.startswith('__'):
+                    continue
+                if filename.lower().endswith('.zip'):
+                    continue
+                file_path = Path(root) / filename
+                pending.append((file_path, filename, current_folder_id, file_path.stat().st_size))
 
+        # OPT 2: batch duplicate check — 1 query instead of N
+        existing_set: set = set()
+        if pending:
+            folder_ids = list({fid for _, _, fid, _ in pending})
+            rows = db.query(
+                DocumentModel.folder_id, DocumentModel.original_filename
+            ).filter(
+                DocumentModel.contract_id == contract.id,
+                DocumentModel.folder_id.in_(folder_ids)
+            ).all()
+            existing_set = {(str(r.folder_id) if r.folder_id else None, r.original_filename) for r in rows}
+
+        new_files = []
+        for entry in pending:
+            _, filename, fid, _ = entry
+            key = (str(fid) if fid else None, filename)
+            if key in existing_set:
+                skipped.append(filename)
+            else:
+                new_files.append(entry)
+
+        # OPT 3: parallel file copies — all copies run concurrently in the thread pool
+        async def _copy_one(src: Path, file_ext: str) -> Path:
+            dest = storage_manager.get_upload_path(f"{uuid4()}{file_ext}")
+            await loop.run_in_executor(None, shutil.copy2, src, dest)
+            return dest
+
+        copy_results = await asyncio.gather(
+            *[_copy_one(fp, Path(fn).suffix.lower()) for fp, fn, _, _ in new_files],
+            return_exceptions=True
+        )
+
+        # OPT 4: batch DB insert — single flush for all documents
+        processed_docs = []
+        for (file_path, filename, folder_id_val, file_size), stored_path in zip(new_files, copy_results):
+            if isinstance(stored_path, Exception):
+                print(f"Error copying {filename}: {stored_path}")
+                skipped.append(filename)
+                continue
+            file_ext = Path(filename).suffix.lower()
+            doc = DocumentModel(
+                type=file_ext.lstrip('.') or 'raw',
+                canonical_path=str(stored_path),
+                original_filename=filename,
+                user_id=current_user.id,
+                contract_id=contract.id,
+                folder_id=folder_id_val,
+                doc_metadata={
+                    "size_bytes": file_size,
+                    "original_extension": file_ext,
+                    "original_path": str(stored_path)
+                }
+            )
+            db.add(doc)
+            processed_docs.append(doc)
+
+        db.flush()
         db.commit()
 
     return {
         "processed": len(processed_docs),
         "skipped": skipped,
-        "timed_out": timed_out,
+        "timed_out": False,
         "documents": [
             DocumentSummary(
                 id=str(d.id),
