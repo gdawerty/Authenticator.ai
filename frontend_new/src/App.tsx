@@ -7,6 +7,7 @@ import { Login } from './components/Login'
 import { Register } from './components/Register'
 import { OAuthCallback } from './components/OAuthCallback'
 import { LandingPage } from './components/landing'
+import { LandingPage as NewLandingPage } from './frontpage'
 import { ThemeToggle } from './components/ThemeToggle'
 import { ContractWorkspace } from './components/ContractWorkspace'
 
@@ -862,6 +863,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/preview" element={<NewLandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/auth/success" element={<OAuthCallback />} />

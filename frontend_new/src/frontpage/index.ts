@@ -1,0 +1,8 @@
+export { LandingPage } from './LandingPage'
+export { HowItWorks } from './HowItWorks'
+export { Hero } from './Hero'
+export { Stats } from './Stats'
+export { Features } from './Features'
+export { Bento } from './Bento'
+export { CTA } from './CTA'
+export { Footer } from './Footer'
