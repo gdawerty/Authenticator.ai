@@ -69,12 +69,18 @@ class PinUpdate(BaseModel):
     pinned: bool
 
 
+class ShareUpdate(BaseModel):
+    shared: bool
+
+
 class ContractSummary(BaseModel):
     id: str
     name: str
     status: str
     pinned: bool = False
+    shared: bool = False
     created_at: str
+    updated_at: str = ""
     document_count: int = 0
 
     class Config:
@@ -267,7 +273,9 @@ async def create_contract(
         name=contract.name,
         status=contract.status,
         pinned=bool(contract.pinned),
+        shared=bool(contract.shared),
         created_at=contract.created_at.isoformat(),
+        updated_at=contract.updated_at.isoformat() if contract.updated_at else contract.created_at.isoformat(),
         document_count=0
     )
 
@@ -280,7 +288,7 @@ async def list_contracts(
     """List all contracts for the current user."""
     contracts = db.query(ContractModel).filter(
         ContractModel.user_id == current_user.id
-    ).order_by(desc(ContractModel.created_at)).all()
+    ).order_by(desc(ContractModel.updated_at)).all()
 
     result = []
     for c in contracts:
@@ -292,7 +300,9 @@ async def list_contracts(
             name=c.name,
             status=c.status,
             pinned=bool(c.pinned),
+            shared=bool(getattr(c, 'shared', 0)),
             created_at=c.created_at.isoformat(),
+            updated_at=c.updated_at.isoformat() if c.updated_at else c.created_at.isoformat(),
             document_count=doc_count
         ))
     return result
@@ -381,7 +391,39 @@ async def pin_contract(
         name=contract.name,
         status=contract.status,
         pinned=bool(contract.pinned),
+        shared=bool(getattr(contract, 'shared', 0)),
         created_at=contract.created_at.isoformat(),
+        updated_at=contract.updated_at.isoformat() if contract.updated_at else contract.created_at.isoformat(),
+        document_count=doc_count
+    )
+
+
+@router.patch("/{contract_id}/share", response_model=ContractSummary)
+async def share_contract(
+    contract_id: str,
+    data: ShareUpdate,
+    current_user: UserModel = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Mark a contract as shared or unshared."""
+    contract = db.query(ContractModel).filter(
+        ContractModel.id == contract_id,
+        ContractModel.user_id == current_user.id
+    ).first()
+    if not contract:
+        raise HTTPException(status_code=404, detail="Contract not found")
+    contract.shared = 1 if data.shared else 0
+    db.commit()
+    db.refresh(contract)
+    doc_count = db.query(DocumentModel).filter(DocumentModel.contract_id == contract.id).count()
+    return ContractSummary(
+        id=str(contract.id),
+        name=contract.name,
+        status=contract.status,
+        pinned=bool(contract.pinned),
+        shared=bool(contract.shared),
+        created_at=contract.created_at.isoformat(),
+        updated_at=contract.updated_at.isoformat() if contract.updated_at else contract.created_at.isoformat(),
         document_count=doc_count
     )
 
