@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from app.core.config import settings
 from app.api import upload, document, convert, context, auth, audits, oauth, pipeline, contracts
@@ -65,6 +66,21 @@ app.include_router(
     prefix=f"{settings.API_V1_PREFIX}/contracts",
     tags=["contracts"]
 )
+
+
+@app.on_event("startup")
+async def run_migrations():
+    """Add any missing columns introduced after initial schema creation."""
+    from app.db.session import engine
+    with engine.connect() as conn:
+        for stmt in [
+            "ALTER TABLE contracts ADD COLUMN shared INTEGER NOT NULL DEFAULT 0",
+        ]:
+            try:
+                conn.execute(text(stmt))
+                conn.commit()
+            except Exception:
+                pass  # Column already exists
 
 
 @app.get("/")

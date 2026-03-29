@@ -3,6 +3,8 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from pathlib import Path
 import docx
+import subprocess
+import tempfile
 from typing import Dict, Any
 from uuid import UUID
 
@@ -214,4 +216,39 @@ async def download_original_pdf(
         path=str(original_path),
         media_type="application/pdf",
         filename=db_document.original_filename
+    )
+
+
+@router.get("/docx-to-pdf/{document_id}")
+async def convert_docx_to_pdf(
+    document_id: UUID,
+    db: Session = Depends(get_db)
+):
+    """Convert a DOCX document to PDF using pandoc and return the PDF."""
+    db_document = db.query(DocumentModel).filter(DocumentModel.id == document_id).first()
+    if not db_document:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    canonical_path = Path(db_document.canonical_path)
+    if not canonical_path.exists():
+        raise HTTPException(status_code=404, detail="Document file not found on disk")
+
+    if canonical_path.suffix.lower() != '.docx':
+        raise HTTPException(status_code=400, detail="Document is not a DOCX file")
+
+    # Write PDF to a temp file (persisted until next request — simple cache by doc id)
+    pdf_path = canonical_path.with_suffix('.pdf')
+    if not pdf_path.exists():
+        result = subprocess.run(
+            ['pandoc', str(canonical_path), '-o', str(pdf_path), '--pdf-engine=xelatex'],
+            capture_output=True, text=True, timeout=60
+        )
+        if result.returncode != 0:
+            raise HTTPException(status_code=500, detail=f"PDF conversion failed: {result.stderr}")
+
+    stem = Path(db_document.original_filename).stem
+    return FileResponse(
+        path=str(pdf_path),
+        media_type="application/pdf",
+        filename=f"{stem}.pdf"
     )

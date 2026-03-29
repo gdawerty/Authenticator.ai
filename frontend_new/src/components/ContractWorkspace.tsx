@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { renderAsync as renderDocx } from 'docx-preview'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github-dark.min.css'
 
@@ -317,13 +316,13 @@ function FolderTree({
               className={`group flex items-center gap-1 py-[3px] pr-1 cursor-pointer select-none transition-colors ${
                 isDragTarget
                   ? 'bg-[#6f8f88]/20 ring-1 ring-[#6f8f88]/40 ring-inset'
-                  : 'hover:bg-black/5 dark:hover:bg-white/5'
+                  : 'hover:bg-white/5'
               }`}
               onClick={() => onToggle(folder.id)}
               onDragOver={e => { e.preventDefault(); e.stopPropagation(); if (draggedDocId) onFolderDrop(folder.id) }}
               onDrop={e => { e.preventDefault(); e.stopPropagation() }}
             >
-              <span className="w-3 flex-shrink-0 text-[10px] text-[#2a2a2a]/40 dark:text-white/30 text-center">
+              <span className="w-3 flex-shrink-0 text-[10px] text-white/30 text-center">
                 {hasChildren || creatingInsideThis ? (isExpanded ? '▾' : '▸') : ''}
               </span>
               <svg className={`w-3.5 h-3.5 flex-shrink-0 ${isDragTarget ? 'text-[#6f8f88]' : 'text-[#6f8f88]'}`} viewBox="0 0 16 16" fill="currentColor">
@@ -332,11 +331,11 @@ function FolderTree({
                   : ".54 3.87.5 3a2 2 0 0 1 2-2h3.19a2 2 0 0 1 1.345.51l.33.33h5.99a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2.16a2 2 0 0 1-1.61-.82L.5 12.27A2 2 0 0 1 .16 11l.38-7.13z"
                 }/>
               </svg>
-              <span className="text-[13px] truncate text-[#1A1A1A] dark:text-[#cccccc] flex-1">{folder.name}</span>
+              <span className="text-[13px] truncate text-white/60 flex-1">{folder.name}</span>
               {isDragTarget && <span className="text-[10px] text-[#6f8f88] flex-shrink-0 pr-1">drop here</span>}
               <button
                 onClick={e => { e.stopPropagation(); onStartCreating(folder.id) }}
-                className="opacity-0 group-hover:opacity-100 transition-opacity text-[#2a2a2a]/40 hover:text-[#6f8f88] text-xs px-1 flex-shrink-0"
+                className="opacity-0 group-hover:opacity-100 transition-opacity text-white/30 hover:text-[#6f8f88] text-xs px-1 flex-shrink-0"
                 title="New subfolder"
               >+</button>
             </div>
@@ -401,7 +400,7 @@ function FolderTree({
             onDragEnd={onDocDragEnd}
             className={`flex items-center gap-1.5 py-[3px] pr-2 cursor-pointer select-none transition-all ${
               isDragging ? 'opacity-40' :
-              isActive ? 'bg-[#6f8f88]/20' : 'hover:bg-black/5 dark:hover:bg-white/5'
+              isActive ? 'bg-[#6f8f88]/20' : 'hover:bg-white/5'
             }`}
           >
             <span
@@ -410,7 +409,7 @@ function FolderTree({
             >
               {label}
             </span>
-            <span className={`text-[13px] truncate ${isActive ? 'text-[#6f8f88]' : 'text-[#1A1A1A] dark:text-[#cccccc]'}`}>
+            <span className={`text-[13px] truncate ${isActive ? 'text-[#6f8f88]' : 'text-white/50'}`}>
               {doc.original_filename}
             </span>
           </div>
@@ -421,28 +420,6 @@ function FolderTree({
 }
 
 // ─── DOCX Loading Skeleton ────────────────────────────────────────────────────
-function DocxSkeleton() {
-  const lines = [55, 80, 95, 70, 88, 75, 90, 65, 82, 77, 60, 91, 72]
-  return (
-    <div className="p-10 max-w-3xl mx-auto animate-pulse">
-      {/* Title */}
-      <div className="h-6 bg-black/10 dark:bg-white/10 rounded-lg w-1/2 mb-8" />
-      {/* Body lines */}
-      <div className="space-y-3">
-        {lines.map((w, i) => (
-          <div key={i} className="h-3.5 bg-black/7 dark:bg-white/7 rounded" style={{ width: `${w}%` }} />
-        ))}
-      </div>
-      {/* Section break */}
-      <div className="h-5 bg-black/10 dark:bg-white/10 rounded-lg w-2/5 mt-10 mb-5" />
-      <div className="space-y-3">
-        {[90, 68, 85, 50, 93].map((w, i) => (
-          <div key={i} className="h-3.5 bg-black/7 dark:bg-white/7 rounded" style={{ width: `${w}%` }} />
-        ))}
-      </div>
-    </div>
-  )
-}
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 function Toast({ msg, type }: { msg: string; type: 'info' | 'warn' | 'error' }) {
@@ -513,7 +490,7 @@ function InspectionToolbar({ activeTool, onToolChange, zoom, onZoom, annotationC
       className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
         activeTool === tool
           ? 'bg-[#6f8f88] text-white shadow-sm'
-          : 'text-[#2a2a2a]/60 dark:text-white/50 hover:bg-black/8 dark:hover:bg-white/8'
+          : 'text-white/50 hover:bg-white/8'
       }`}
     >
       {icon}
@@ -522,18 +499,18 @@ function InspectionToolbar({ activeTool, onToolChange, zoom, onZoom, annotationC
   )
 
   return (
-    <div className="flex items-center gap-1 px-2 py-1.5 bg-white/80 dark:bg-[#252525]/90 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-xl shadow-lg">
+    <div className="flex items-center gap-1 px-2 py-1.5 bg-[#1a1a1a]/90 backdrop-blur-sm border border-white/10 rounded-xl shadow-lg">
       {/* Zoom */}
-      <button onClick={() => onZoom(-0.25)} title="Zoom out" className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-black/8 text-[#2a2a2a]/60 dark:text-white/50 transition-colors">
+      <button onClick={() => onZoom(-0.25)} title="Zoom out" className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-white/8 text-white/50 transition-colors">
         <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="currentColor"><path d="M6.5 1a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM0 6.5a6.5 6.5 0 1 1 11.74 3.832l3.223 3.223a.5.5 0 0 1-.707.707L11.032 11.04A6.5 6.5 0 0 1 0 6.5zm3.5 0a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1H4a.5.5 0 0 1-.5-.5z"/></svg>
       </button>
-      <span className="text-[11px] font-mono text-[#2a2a2a]/50 dark:text-white/40 w-9 text-center">{Math.round(zoom * 100)}%</span>
-      <button onClick={() => onZoom(0.25)} title="Zoom in" className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-black/8 text-[#2a2a2a]/60 dark:text-white/50 transition-colors">
+      <span className="text-[11px] font-mono text-white/40 w-9 text-center">{Math.round(zoom * 100)}%</span>
+      <button onClick={() => onZoom(0.25)} title="Zoom in" className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-white/8 text-white/50 transition-colors">
         <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="currentColor"><path d="M6.5 1a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM0 6.5a6.5 6.5 0 1 1 11.74 3.832l3.223 3.223a.5.5 0 0 1-.707.707L11.032 11.04A6.5 6.5 0 0 1 0 6.5zm3.5 0a.5.5 0 0 1 .5.5V8H5.5a.5.5 0 0 1 0 1H4v1.5a.5.5 0 0 1-1 0V9H1.5a.5.5 0 0 1 0-1H3V7a.5.5 0 0 1 .5-.5z"/></svg>
       </button>
-      <button onClick={() => onZoom(0)} title="Reset zoom" className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-black/8 text-[#2a2a2a]/40 dark:text-white/30 transition-colors text-[10px] font-mono">1:1</button>
+      <button onClick={() => onZoom(0)} title="Reset zoom" className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-white/8 text-white/30 transition-colors text-[10px] font-mono">1:1</button>
 
-      <div className="w-px h-5 bg-black/10 dark:bg-white/10 mx-0.5" />
+      <div className="w-px h-5 bg-white/10 mx-0.5" />
 
       {/* Highlight */}
       {btn('highlight',
@@ -549,7 +526,7 @@ function InspectionToolbar({ activeTool, onToolChange, zoom, onZoom, annotationC
         'Region Selector — draw a bounding box to flag an area'
       )}
 
-      <div className="w-px h-5 bg-black/10 dark:bg-white/10 mx-0.5" />
+      <div className="w-px h-5 bg-white/10 mx-0.5" />
 
       {/* Annotate (manual note) */}
       {btn('annotate',
@@ -560,7 +537,7 @@ function InspectionToolbar({ activeTool, onToolChange, zoom, onZoom, annotationC
 
       {annotationCount > 0 && (
         <>
-          <div className="w-px h-5 bg-black/10 dark:bg-white/10 mx-0.5" />
+          <div className="w-px h-5 bg-white/10 mx-0.5" />
           <button
             onClick={onJumpToFlag}
             title="Jump to first flagged region"
@@ -605,11 +582,6 @@ function FilePreview({ doc, contractId, token, onClose, sha256, virtualContent, 
   const [region, setRegion] = useState<RegionDraft | null>(null)
   const [modalConfig, setModalConfig] = useState<{ title: string; defaultText?: string; onConfirm: (c: string) => void } | null>(null)
 
-  // DOCX: raw buffer + extracted pages (one HTML string per page)
-  const [docxBuffer, setDocxBuffer] = useState<ArrayBuffer | null>(null)
-  const [docxPages, setDocxPages] = useState<string[]>([])
-  const [visiblePageCount, setVisiblePageCount] = useState(3)
-
   // Code viewer: syntax-highlighted HTML from highlight.js
   const [highlightedHtml, setHighlightedHtml] = useState<string | null>(null)
 
@@ -617,16 +589,40 @@ function FilePreview({ doc, contractId, token, onClose, sha256, virtualContent, 
   const [hoveredAnnId, setHoveredAnnId] = useState<string | null>(null)
   const [imgBounds, setImgBounds] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
 
+  // Panel layout state
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarWidth, setSidebarWidth] = useState(280)
+  const [toolbarCollapsed, setToolbarCollapsed] = useState(false)
+  const sidebarDragRef = useRef<{ startX: number; startW: number } | null>(null)
+
+  // Context analyzer state
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [analyzerDone, setAnalyzerDone] = useState(false)
+
   const imgRef = useRef<HTMLImageElement>(null)
   const previewBodyRef = useRef<HTMLDivElement>(null)       // outer flex: content + sidebar
   const imageContainerRef = useRef<HTMLDivElement>(null)    // left scrollable pane
-  const pagesContainerRef = useRef<HTMLDivElement>(null)    // DOCX: all word-page divs stacked
-  const loaderSentinelRef = useRef<HTMLDivElement>(null)    // DOCX: lazy-load trigger element
   const blobUrlRef = useRef<string | null>(null)
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   const isVirtual = doc.id === CONTENT_MD_ID
   const rawUrl = `${API_BASE_URL}/contracts/${contractId}/documents/${doc.id}/raw`
+
+  const runContextAnalyzer = useCallback(async () => {
+    if (isVirtual || isAnalyzing) return
+    setIsAnalyzing(true)
+    setAnalyzerDone(false)
+    try {
+      const res = await fetch(`${API_BASE_URL}/documents/${doc.id}/analyze-context`, { method: 'POST' })
+      if (!res.ok) throw new Error('Analysis failed')
+      setAnalyzerDone(true)
+      setTimeout(() => setAnalyzerDone(false), 3000)
+    } catch {
+      setAnalyzerDone(false)
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }, [doc.id, isVirtual, isAnalyzing])
   const category = isVirtual ? 'text' : getFileCategory(doc.original_filename)
   // sorted by timestamp ascending
   const docAnnotations = annotations
@@ -637,16 +633,20 @@ function FilePreview({ doc, contractId, token, onClose, sha256, virtualContent, 
   // ── Load content ────────────────────────────────────────────────────────────
   useEffect(() => {
     setContent(null); setError(null); setZoom(1); setActiveTool(null); setImgBounds(null)
-    setDocxBuffer(null); setDocxPages([]); setVisiblePageCount(3)
     if (isVirtual) { setContent(virtualContent ?? ''); return }
 
-    // DOCX: fetch raw buffer — rendering is handled by a separate renderAsync effect
+    // DOCX: convert to PDF on the backend, then display with the PDF viewer
     if (category === 'docx') {
       setLoading(true)
-      fetch(rawUrl, { headers: { Authorization: `Bearer ${token}` } })
-        .then(r => r.arrayBuffer())
-        .then(buf => setDocxBuffer(buf))
-        .catch(() => { setError('Could not load document'); setLoading(false) })
+      fetch(`${API_BASE_URL}/docx-to-pdf/${doc.id}`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => { if (!r.ok) throw new Error('Conversion failed'); return r.blob() })
+        .then(blob => {
+          if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current)
+          const url = URL.createObjectURL(blob)
+          blobUrlRef.current = url
+          setContent(url); setLoading(false)
+        })
+        .catch(() => { setError('Could not convert document to PDF'); setLoading(false) })
       return
     }
 
@@ -669,47 +669,6 @@ function FilePreview({ doc, contractId, token, onClose, sha256, virtualContent, 
     return () => { if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current) }
   }, [doc.id])
 
-  // ── DOCX: render into a temp div, extract per-page HTML, then lazy-render ───
-  useEffect(() => {
-    if (!docxBuffer) return
-    const tempDiv = document.createElement('div')
-    renderDocx(docxBuffer, tempDiv, undefined, {
-      className: 'docx',
-      inWrapper: false,
-      ignoreWidth: false,   // let docx-preview set dimensions from the document
-      ignoreHeight: false,
-      breakPages: true,     // each page → its own <section>
-      renderHeaders: true,  // header repeats on every page
-      renderFooters: true,  // footer repeats on every page
-      renderFootnotes: true,
-    })
-      .then(() => {
-        // Each page is a <section> element; fall back to whole content if no breaks
-        const sections = Array.from(tempDiv.querySelectorAll('section'))
-        const pages = sections.length > 0
-          ? sections.map(s => s.outerHTML)
-          : [tempDiv.innerHTML]
-        setDocxPages(pages)
-        setVisiblePageCount(Math.min(3, pages.length))
-        setLoading(false)
-      })
-      .catch(() => { setError('Could not render document'); setLoading(false) })
-  }, [docxBuffer])
-
-  // ── DOCX lazy loading: reveal 3 more pages when sentinel scrolls into view ───
-  useEffect(() => {
-    const sentinel = loaderSentinelRef.current
-    if (!sentinel || visiblePageCount >= docxPages.length) return
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setVisiblePageCount(c => Math.min(c + 3, docxPages.length))
-      },
-      { rootMargin: '400px' }
-    )
-    observer.observe(sentinel)
-    return () => observer.disconnect()
-  }, [visiblePageCount, docxPages.length])
-
   // ── Code: syntax-highlight whenever raw content changes ─────────────────────
   useEffect(() => {
     if (category !== 'code' || !content) { setHighlightedHtml(null); return }
@@ -727,25 +686,6 @@ function FilePreview({ doc, contractId, token, onClose, sha256, virtualContent, 
       )
     }
   }, [content, category, doc.original_filename])
-
-  // ── DOCX imgBounds: pagesContainer position within imageContainerRef ─────────
-  useEffect(() => {
-    if (category !== 'docx' || docxPages.length === 0) return
-    const update = () => {
-      if (!pagesContainerRef.current || !imageContainerRef.current) return
-      const cRect = imageContainerRef.current.getBoundingClientRect()
-      const pRect = pagesContainerRef.current.getBoundingClientRect()
-      setImgBounds({
-        x: pRect.left - cRect.left,
-        y: pRect.top  - cRect.top,
-        w: pagesContainerRef.current.offsetWidth,
-        h: pagesContainerRef.current.scrollHeight,
-      })
-    }
-    // Re-measure after each batch of lazy-loaded pages settles
-    const t = setTimeout(update, 80)
-    return () => clearTimeout(t)
-  }, [docxPages.length, visiblePageCount, category])
 
   // ── Image bounds tracking ────────────────────────────────────────────────────
   // imgBounds = position of rendered img relative to imageContainerRef
@@ -772,9 +712,9 @@ function FilePreview({ doc, contractId, token, onClose, sha256, virtualContent, 
     return () => clearTimeout(t)
   }, [zoom, content, updateImgBounds])
 
-  // ── Focus mode spotlight (image/pdf only — DOCX has its own inline spotlight) ─
+  // ── Focus mode spotlight ─────────────────────────────────────────────────────
   const focusSpot = (() => {
-    if (!hoveredAnnId || !imgBounds || category === 'docx') return null
+    if (!hoveredAnnId || !imgBounds) return null
     const ann = docAnnotations.find(a => a.id === hoveredAnnId)
     if (!ann?.region) return null
     const { x, y, w, h } = ann.region
@@ -800,13 +740,7 @@ function FilePreview({ doc, contractId, token, onClose, sha256, virtualContent, 
     const cy = cardRect.top - bodyRect.top + cardRect.height / 2
 
     let bx: number, by: number
-    if (category === 'docx' && pagesContainerRef.current) {
-      const pEl = pagesContainerRef.current
-      const pRect = pEl.getBoundingClientRect()
-      const { x, y, w, h } = ann.region
-      bx = (pRect.left - bodyRect.left) + (x + w / 2) / 100 * pEl.offsetWidth
-      by = (pRect.top - bodyRect.top)  + (y + h / 2) / 100 * pEl.scrollHeight
-    } else if ((category === 'text' || category === 'code') && imageContainerRef.current) {
+    if ((category === 'text' || category === 'code') && imageContainerRef.current) {
       const ic = imageContainerRef.current
       const icRect = ic.getBoundingClientRect()
       const { x, y, w, h } = ann.region
@@ -870,12 +804,7 @@ function FilePreview({ doc, contractId, token, onClose, sha256, virtualContent, 
       if (selRect.width > 0 || selRect.height > 0) {
         let containerEl: HTMLElement | null = null
         let totalW: number, totalH: number, scrollX: number, scrollY: number
-        if (category === 'docx' && pagesContainerRef.current) {
-          containerEl = pagesContainerRef.current
-          totalW = containerEl.offsetWidth
-          totalH = containerEl.scrollHeight
-          scrollX = 0; scrollY = 0   // pagesContainer never scrolls; imageContainer does
-        } else if (imageContainerRef.current) {
+        if (imageContainerRef.current) {
           containerEl = imageContainerRef.current
           totalW = containerEl.scrollWidth
           totalH = containerEl.scrollHeight
@@ -935,21 +864,11 @@ function FilePreview({ doc, contractId, token, onClose, sha256, virtualContent, 
     if (w < 10 || h < 10) { setRegion(null); return }
 
     let nx: number, ny: number, nw: number, nh: number
-    if (category === 'docx' && pagesContainerRef.current) {
-      // Coords from getRel are relative to the pagesContainer (all pages stacked)
-      const pw = pagesContainerRef.current.offsetWidth
-      const ph = pagesContainerRef.current.scrollHeight
-      nx = Math.max(0, Math.round(x / pw * 100))
-      ny = Math.max(0, Math.round(y / ph * 100))
-      nw = Math.min(100 - nx, Math.round(w / pw * 100))
-      nh = Math.min(100 - ny, Math.round(h / ph * 100))
-    } else {
-      if (!imgBounds) { setRegion(null); return }
-      nx = Math.max(0, Math.round((x - imgBounds.x) / imgBounds.w * 100))
-      ny = Math.max(0, Math.round((y - imgBounds.y) / imgBounds.h * 100))
-      nw = Math.min(100 - nx, Math.round(w / imgBounds.w * 100))
-      nh = Math.min(100 - ny, Math.round(h / imgBounds.h * 100))
-    }
+    if (!imgBounds) { setRegion(null); return }
+    nx = Math.max(0, Math.round((x - imgBounds.x) / imgBounds.w * 100))
+    ny = Math.max(0, Math.round((y - imgBounds.y) / imgBounds.h * 100))
+    nw = Math.min(100 - nx, Math.round(w / imgBounds.w * 100))
+    nh = Math.min(100 - ny, Math.round(h / imgBounds.h * 100))
 
     const normalized = { x: nx, y: ny, w: nw, h: nh }
     setModalConfig({
@@ -966,62 +885,58 @@ function FilePreview({ doc, contractId, token, onClose, sha256, virtualContent, 
     setZoom(z => Math.min(4, Math.max(0.25, z + delta)))
   }
 
-  const isRegionTool = activeTool === 'region' && (category === 'image' || category === 'pdf' || category === 'docx')
-  const isHighlightTool = activeTool === 'highlight' && (category === 'text' || category === 'code' || category === 'docx')
+  const isRegionTool = activeTool === 'region' && (category === 'image' || category === 'pdf')
+  const isHighlightTool = activeTool === 'highlight' && (category === 'text' || category === 'code')
 
-  // Render a bounding box in imageContainer space using imgBounds
-  const renderBox = (ann: ForensicAnnotation) => {
-    if (!ann.region || !imgBounds) return null
-    const { x, y, w, h } = ann.region
-    const isHov = hoveredAnnId === ann.id
-    return (
-      <div key={ann.id}
-        style={{
-          position: 'absolute',
-          left: imgBounds.x + x / 100 * imgBounds.w,
-          top:  imgBounds.y + y / 100 * imgBounds.h,
-          width: w / 100 * imgBounds.w,
-          height: h / 100 * imgBounds.h,
-          pointerEvents: 'none',
-          transition: 'box-shadow 0.2s, border-color 0.2s',
-        }}
-        className={`border-2 rounded ${isHov
-          ? 'border-[#e53935] shadow-[0_0_0_3px_rgba(229,57,53,0.25),0_0_18px_rgba(229,57,53,0.4)]'
-          : 'border-[#e53935]/70 bg-[#e53935]/5'}`}
-      >
-        {!isHov && (
-          <span className="absolute -top-5 left-0 text-[9px] text-[#e53935] bg-white/90 px-1 rounded whitespace-nowrap max-w-28 truncate leading-4">
-            {ann.content}
-          </span>
-        )}
-      </div>
-    )
-  }
 
   return (
     <div className="flex flex-col h-full">
       {/* ── Header ── */}
-      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-black/10 dark:border-white/10 flex-shrink-0 bg-[#b8b8af]/20 dark:bg-[#1e1e1e]/60">
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/8 flex-shrink-0 bg-[#151515]">
         <VsCodeIcon filename={doc.original_filename} size={22} />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-[#1A1A1A] dark:text-white truncate">{doc.original_filename}</p>
+          <p className="text-sm font-medium text-white/90 truncate">{doc.original_filename}</p>
           {sha256 && (
-            <p className="text-[10px] font-mono text-[#2a2a2a]/35 truncate" title={`SHA-256: ${sha256}`}>
+            <p className="text-[10px] font-mono text-white/25 truncate" title={`SHA-256: ${sha256}`}>
               sha256:{sha256.slice(0, 20)}…
             </p>
           )}
         </div>
         {!isVirtual && (
+          <button
+            onClick={runContextAnalyzer}
+            disabled={isAnalyzing}
+            title="Run through context analyzer"
+            className="text-xs px-2.5 py-1 rounded-lg bg-[#6f8f88]/12 hover:bg-[#6f8f88]/22 transition-colors text-[#6f8f88] flex-shrink-0 flex items-center gap-1.5 disabled:opacity-50"
+          >
+            {isAnalyzing ? (
+              <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+            ) : analyzerDone ? (
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+              </svg>
+            ) : (
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+              </svg>
+            )}
+            {analyzerDone ? 'Done' : 'Context Analyzer'}
+          </button>
+        )}
+        {!isVirtual && (
           <a href={content && category !== 'text' ? content : rawUrl} download={doc.original_filename}
-            className="text-xs px-2 py-1 rounded-lg bg-black/8 hover:bg-black/15 transition-colors text-[#2a2a2a] flex-shrink-0">↓</a>
+            className="text-xs px-2 py-1 rounded-lg bg-white/8 hover:bg-white/15 transition-colors text-white/50 hover:text-white flex-shrink-0">↓</a>
         )}
         <button onClick={onClose}
-          className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-black/10 transition-colors text-[#2a2a2a]/60 flex-shrink-0 text-sm">✕</button>
+          className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors text-white/40 hover:text-white/70 flex-shrink-0 text-sm">✕</button>
       </div>
 
       {/* ── Inspection Toolbar ── */}
       {!isVirtual && (
-        <div className="flex items-center justify-center px-4 py-2 border-b border-black/8 flex-shrink-0 bg-[#b8b8af]/10">
+        <div className="flex items-center justify-center px-4 py-2 border-b border-white/6 flex-shrink-0 bg-[#111111]">
           <InspectionToolbar
             activeTool={activeTool}
             onToolChange={t => setActiveTool(t)}
@@ -1058,10 +973,10 @@ function FilePreview({ doc, contractId, token, onClose, sha256, virtualContent, 
 
         {/* ── Left: document content ── */}
         <div ref={imageContainerRef}
-          className={`flex-1 overflow-auto relative ${isRegionTool && category !== 'docx' ? 'cursor-crosshair select-none' : ''}`}
-          onMouseDown={category !== 'docx' ? onRgnDown : undefined}
-          onMouseMove={category !== 'docx' ? onRgnMove : undefined}
-          onMouseUp={category !== 'docx' ? onRgnUp : undefined}
+          className={`flex-1 overflow-auto relative bg-[#0a0a0a] ${isRegionTool ? 'cursor-crosshair select-none' : ''}`}
+          onMouseDown={onRgnDown}
+          onMouseMove={onRgnMove}
+          onMouseUp={onRgnUp}
         >
           {/* Focus mode spotlight — placed first so annotation boxes stack above it */}
           <svg
@@ -1079,24 +994,53 @@ function FilePreview({ doc, contractId, token, onClose, sha256, virtualContent, 
             <rect width="100%" height="100%" fill="rgba(0,0,0,0.4)" mask="url(#focus-mask)" />
           </svg>
 
-          {loading && category !== 'docx' && <div className="absolute inset-0 flex items-center justify-center text-[#2a2a2a]/40 text-sm">Loading…</div>}
+          {loading && <div className="absolute inset-0 flex items-center justify-center text-white/30 text-sm">Loading…</div>}
           {error && <div className="absolute inset-0 flex items-center justify-center text-red-500 text-sm">{error}</div>}
 
           {/* Image */}
           {!loading && !error && content && category === 'image' && (
-            <div className="w-full h-full flex items-center justify-center p-6">
-              <img
-                ref={imgRef}
-                src={content}
-                alt={doc.original_filename}
-                draggable={false}
-                onLoad={updateImgBounds}
-                style={{ transform: `scale(${zoom})`, transformOrigin: 'center', transition: 'transform 0.15s ease' }}
-                className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
-              />
-              {/* Persistent bounding boxes (tracked to image bounds) */}
-              {regionAnnotations.map(a => renderBox(a))}
-              {/* Active rubber-band */}
+            <div className="w-full h-full flex items-center justify-center p-8">
+              {/* Wrapper gives the image a positioned context so % coords are relative to the image itself */}
+              <div
+                className="relative"
+                style={{ transform: `scale(${zoom})`, transformOrigin: 'center', transition: 'transform 0.15s ease', lineHeight: 0 }}
+              >
+                <img
+                  ref={imgRef}
+                  src={content}
+                  alt={doc.original_filename}
+                  draggable={false}
+                  onLoad={updateImgBounds}
+                  className="block max-w-full max-h-full object-contain rounded-lg shadow-lg"
+                />
+                {/* Annotation boxes — % coords are directly relative to the image, always exact */}
+                {regionAnnotations.map(a => {
+                  if (!a.region) return null
+                  const { x, y, w, h } = a.region
+                  const isHov = hoveredAnnId === a.id
+                  return (
+                    <div key={a.id}
+                      style={{
+                        position: 'absolute',
+                        left: `${x}%`, top: `${y}%`,
+                        width: `${w}%`, height: `${h}%`,
+                        pointerEvents: 'none',
+                        transition: 'box-shadow 0.2s, border-color 0.2s',
+                      }}
+                      className={`border-2 rounded ${isHov
+                        ? 'border-[#e53935] shadow-[0_0_0_3px_rgba(229,57,53,0.25),0_0_18px_rgba(229,57,53,0.4)]'
+                        : 'border-[#e53935]/70 bg-[#e53935]/5'}`}
+                    >
+                      {!isHov && (
+                        <span className="absolute -top-5 left-0 text-[9px] text-[#e53935] bg-white/90 px-1 rounded whitespace-nowrap max-w-28 truncate leading-4">
+                          {a.content}
+                        </span>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+              {/* Active rubber-band — in container space (raw mouse coords), fine for draw-time feedback */}
               {region && (
                 <div style={{ position: 'absolute', left: region.x, top: region.y, width: region.w, height: region.h }}
                   className="border-2 border-dashed border-[#6f8f88] bg-[#6f8f88]/12 pointer-events-none rounded" />
@@ -1104,8 +1048,8 @@ function FilePreview({ doc, contractId, token, onClose, sha256, virtualContent, 
             </div>
           )}
 
-          {/* PDF */}
-          {!loading && !error && content && category === 'pdf' && (
+          {/* PDF / DOCX (converted to PDF) */}
+          {!loading && !error && content && (category === 'pdf' || category === 'docx') && (
             <div className="relative w-full h-full">
               <iframe src={content} title={doc.original_filename} className="w-full h-full border-0" />
               {isRegionTool && (
@@ -1223,155 +1167,12 @@ function FilePreview({ doc, contractId, token, onClose, sha256, virtualContent, 
             )
           })()}
 
-          {/* DOCX — Multi-page Paper Mode */}
-          {category === 'docx' && (
-            <>
-              {/* Inject paper-mode overrides on top of docx-preview's own CSS */}
-              <style>{`
-                .docx-pages-workspace section {
-                  background: #ffffff !important;
-                  box-shadow: 0 2px 6px rgba(0,0,0,0.07), 0 8px 28px rgba(0,0,0,0.11) !important;
-                  overflow: visible !important;
-                  box-sizing: border-box !important;
-                  border-radius: 1px !important;
-                  position: relative !important;
-                }
-                .docx-pages-workspace {
-                  overflow: visible !important;
-                }
-                /* Ensure docx-preview text is crisp on white background */
-                .docx-pages-workspace .docx {
-                  color: #1a1a1a !important;
-                }
-                .docx-pages-workspace p, .docx-pages-workspace span {
-                  font-family: inherit;
-                }
-              `}</style>
-
-              {/* Grey workspace — imageContainerRef owns the scroll, so this fills it */}
-              <div className="min-h-full w-full bg-[#E5E7EB] flex flex-col items-center py-10 gap-5">
-
-                {/* Loading skeleton */}
-                {loading && (
-                  <div style={{ width: 816, minHeight: 1056, background: '#fff', boxShadow: '0 4px 20px rgba(0,0,0,0.10)' }}>
-                    <DocxSkeleton />
-                  </div>
-                )}
-
-                {/* Pages container — all word-pages stacked; annotations + spotlight live here */}
-                {!loading && docxPages.length > 0 && (
-                  <div
-                    ref={pagesContainerRef}
-                    className={`docx-pages-workspace relative flex flex-col gap-5 ${isRegionTool ? 'cursor-crosshair select-none' : ''}`}
-                    style={{ width: 816 }}
-                    onMouseDown={isRegionTool ? onRgnDown : undefined}
-                    onMouseMove={isRegionTool ? onRgnMove : undefined}
-                    onMouseUp={isRegionTool ? onRgnUp : undefined}
-                  >
-                    {/* Rendered pages — lazy: only first `visiblePageCount` rendered */}
-                    {docxPages.slice(0, visiblePageCount).map((pageHtml, i) => (
-                      <div key={i} className="relative">
-                        <div
-                          className={isHighlightTool ? 'cursor-text' : ''}
-                          onMouseUp={isHighlightTool ? handleTextMouseUp : undefined}
-                          dangerouslySetInnerHTML={{ __html: pageHtml }}
-                        />
-                        {/* Per-page number — bottom-right corner */}
-                        <div className="absolute bottom-2.5 right-4 text-[9px] text-[#2a2a2a]/20 font-mono select-none pointer-events-none" style={{ zIndex: 1 }}>
-                          {i + 1}
-                        </div>
-                      </div>
-                    ))}
-
-                    {/* Lazy-load sentinel + loading indicator */}
-                    {visiblePageCount < docxPages.length && (
-                      <div ref={loaderSentinelRef} className="flex items-center justify-center py-4">
-                        <div className="text-[11px] text-[#2a2a2a]/40 animate-pulse">
-                          Loading page {visiblePageCount + 1} of {docxPages.length}…
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Page counter badge */}
-                    {docxPages.length > 1 && (
-                      <div className="sticky bottom-4 flex justify-end pr-2 pointer-events-none" style={{ zIndex: 30 }}>
-                        <span className="text-[9px] font-mono bg-black/55 text-white px-2 py-1 rounded-full backdrop-blur-sm">
-                          {Math.min(visiblePageCount, docxPages.length)} / {docxPages.length} pages
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Annotation boxes + rubber-band — SVG spans full stacked height */}
-                    <svg
-                      className="absolute inset-0 pointer-events-none"
-                      style={{ width: '100%', height: '100%', zIndex: 5 }}
-                    >
-                      {docAnnotations.filter(a => a.region).map(ann => {
-                        const { x, y, w, h } = ann.region!
-                        const isHov = hoveredAnnId === ann.id
-                        const isHL = ann.type === 'text-selection'
-                        return (
-                          <g key={ann.id}>
-                            <rect
-                              x={`${x}%`} y={`${y}%`} width={`${w}%`} height={`${h}%`}
-                              fill={isHL
-                                ? (isHov ? 'rgba(111,143,136,0.35)' : 'rgba(111,143,136,0.20)')
-                                : (isHov ? 'rgba(229,57,53,0.09)' : 'rgba(229,57,53,0.04)')}
-                              stroke={isHL
-                                ? (isHov ? '#6f8f88' : 'rgba(111,143,136,0.55)')
-                                : (isHov ? '#e53935' : 'rgba(229,57,53,0.6)')}
-                              strokeWidth={isHov ? 2.5 : 1.5} rx="3"
-                              style={{ transition: 'fill 0.15s, stroke 0.15s' }}
-                            />
-                            {!isHov && !isHL && (
-                              <text x={`${x}%`} y={`${y}%`} dy="-5" fontSize="9" fill="#e53935" opacity="0.8">
-                                {ann.content.slice(0, 40)}
-                              </text>
-                            )}
-                          </g>
-                        )
-                      })}
-                      {region && isRegionTool && (
-                        <rect
-                          x={region.x} y={region.y} width={region.w} height={region.h}
-                          fill="rgba(111,143,136,0.1)" stroke="#6f8f88"
-                          strokeWidth="2" strokeDasharray="4 3" rx="3"
-                        />
-                      )}
-                    </svg>
-
-                    {/* Focus mode spotlight — dims across all pages */}
-                    {(() => {
-                      if (!hoveredAnnId) return null
-                      const ann = docAnnotations.find(a => a.id === hoveredAnnId)
-                      if (!ann?.region) return null
-                      const { x, y, w, h } = ann.region
-                      return (
-                        <svg
-                          className="absolute inset-0 pointer-events-none"
-                          style={{ width: '100%', height: '100%', zIndex: 10, transition: 'opacity 0.2s ease' }}
-                        >
-                          <defs>
-                            <mask id="docx-focus-mask">
-                              <rect width="100%" height="100%" fill="white" />
-                              <rect x={`${x}%`} y={`${y}%`} width={`${w}%`} height={`${h}%`} fill="black" rx="4" />
-                            </mask>
-                          </defs>
-                          <rect width="100%" height="100%" fill="rgba(0,0,0,0.4)" mask="url(#docx-focus-mask)" />
-                        </svg>
-                      )
-                    })()}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
 
           {/* Other */}
           {!loading && !error && category === 'other' && (
             <div className="w-full h-full flex flex-col items-center justify-center gap-4 p-6 text-center">
               <div className="text-6xl opacity-30">📎</div>
-              <p className="text-sm text-[#2a2a2a]/60">No preview for this file type</p>
+              <p className="text-sm text-white/40">No preview for this file type</p>
               <a href={rawUrl} download={doc.original_filename}
                 className="px-4 py-2 bg-[#6f8f88] text-white rounded-xl text-sm hover:bg-[#5a7a73] transition-colors">
                 Download file
@@ -1382,10 +1183,10 @@ function FilePreview({ doc, contractId, token, onClose, sha256, virtualContent, 
 
         {/* ── Right: Annotation Sidecar ── */}
         {docAnnotations.length > 0 && (
-          <div className="w-[350px] flex-shrink-0 border-l border-black/10 dark:border-white/10 bg-white/60 dark:bg-[#1a1a1a]/60 flex flex-col overflow-hidden">
+          <div className="w-[320px] flex-shrink-0 border-l border-white/8 bg-[#111111] flex flex-col overflow-hidden">
             {/* Sidecar header */}
-            <div className="px-3 py-2 border-b border-black/8 flex items-center justify-between flex-shrink-0">
-              <span className="text-[10px] font-bold tracking-widest text-[#2a2a2a]/40 uppercase">Annotations</span>
+            <div className="px-3 py-2.5 border-b border-white/6 flex items-center justify-between flex-shrink-0 bg-[#151515]">
+              <span className="text-[10px] font-bold tracking-widest text-white/30 uppercase">Annotations</span>
               <span className="text-[10px] font-mono text-[#6f8f88]">{docAnnotations.length}</span>
             </div>
 
@@ -1405,7 +1206,7 @@ function FilePreview({ doc, contractId, token, onClose, sha256, virtualContent, 
                       ann.region ? 'cursor-pointer' : ''
                     } ${isHov
                       ? 'bg-[#6f8f88]/12 border-[#6f8f88]/35 shadow-sm'
-                      : 'bg-white/70 dark:bg-white/5 border-black/8 hover:border-black/15'
+                      : 'bg-white/4 border-white/6 hover:border-white/12'
                     }`}
                   >
                     {/* Card header row */}
@@ -1414,30 +1215,30 @@ function FilePreview({ doc, contractId, token, onClose, sha256, virtualContent, 
                       <div className="relative flex-shrink-0">
                         <div className={`w-1.5 h-1.5 rounded-full ${ann.type === 'region' ? 'bg-[#e53935]' : ann.type === 'text-selection' ? 'bg-[#6f8f88]' : 'bg-[#f59e0b]'}`} />
                         {i < docAnnotations.length - 1 && (
-                          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-px h-3 bg-black/10" />
+                          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-px h-3 bg-white/10" />
                         )}
                       </div>
                       {/* Pill label */}
                       <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 ${
                         ann.type === 'region' ? 'bg-[#e53935]/10 text-[#e53935]' :
                         ann.type === 'text-selection' ? 'bg-[#6f8f88]/15 text-[#6f8f88]' :
-                        'bg-amber-100 text-amber-700'
+                        'bg-amber-500/15 text-amber-400'
                       }`}>
                         {typeIcon} {typeLabel}
                       </span>
-                      <span className="ml-auto text-[9px] text-[#2a2a2a]/30 flex-shrink-0">{timeAgo(ann.timestamp)}</span>
+                      <span className="ml-auto text-[9px] text-white/25 flex-shrink-0">{timeAgo(ann.timestamp)}</span>
                     </div>
 
                     {/* Excerpt (for text selections) */}
                     {ann.excerpt && (
-                      <p className="text-[10px] italic text-[#2a2a2a]/50 line-clamp-2 border-l-2 border-[#6f8f88]/30 pl-1.5">
+                      <p className="text-[10px] italic text-white/40 line-clamp-2 border-l-2 border-[#6f8f88]/30 pl-1.5">
                         "{ann.excerpt}"
                       </p>
                     )}
 
                     {/* Comment */}
                     {ann.content && (
-                      <p className="text-[11px] text-[#1A1A1A] dark:text-[#e0e0e0] font-medium line-clamp-3">
+                      <p className="text-[11px] text-white/80 font-medium line-clamp-3">
                         {ann.content}
                       </p>
                     )}
@@ -1445,7 +1246,7 @@ function FilePreview({ doc, contractId, token, onClose, sha256, virtualContent, 
                     {/* Region coords chip */}
                     {ann.region && (
                       <div className="flex items-center gap-1 mt-0.5">
-                        <span className="text-[8px] font-mono text-[#2a2a2a]/25 bg-black/5 px-1 rounded">
+                        <span className="text-[8px] font-mono text-white/20 bg-white/5 px-1 rounded">
                           x{ann.region.x} y{ann.region.y} {ann.region.w}×{ann.region.h}
                         </span>
                         {ann.region && (
@@ -1977,7 +1778,8 @@ export function ContractWorkspace({ contractId, contractName, token, initialFile
 
   return (
     <div
-      className="flex-1 flex overflow-hidden relative"
+      className="flex-1 flex overflow-hidden relative bg-[#0a0a0a]"
+      style={{ backgroundImage: 'radial-gradient(circle, #1d1d1d 1px, transparent 1px)', backgroundSize: '22px 22px' }}
       onDragEnter={e => { e.preventDefault(); e.stopPropagation(); setIsDragging(true) }}
       onDragOver={e => { e.preventDefault(); e.stopPropagation() }}
       onDragLeave={e => { e.preventDefault(); e.stopPropagation(); if (e.currentTarget === e.target) setIsDragging(false) }}
@@ -1996,24 +1798,24 @@ export function ContractWorkspace({ contractId, contractName, token, initialFile
       </AnimatePresence>
 
       {/* ── VS Code sidebar: full file tree ── */}
-      <div className="w-60 flex-shrink-0 border-r border-black/10 dark:border-white/10 bg-[#b0b0a8]/40 dark:bg-[#1e1e1e] flex flex-col overflow-hidden">
+      <div className="w-56 flex-shrink-0 border-r border-white/6 bg-[#111111] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-black/10 dark:border-white/10 flex-shrink-0">
-          <button onClick={onClose} className="text-[11px] text-[#2a2a2a]/50 dark:text-white/40 hover:text-[#1A1A1A] dark:hover:text-white transition-colors">← back</button>
+        <div className="flex items-center justify-between px-3 py-2.5 border-b border-white/6 flex-shrink-0">
+          <button onClick={onClose} className="text-[11px] text-white/30 hover:text-white/70 transition-colors flex items-center gap-1">← back</button>
           <div className="flex items-center gap-2">
             {isUploading && <span className="text-[10px] text-[#6f8f88] animate-pulse">{uploadProgress ?? 'uploading…'}</span>}
-            <button onClick={() => startCreatingFolder(null)} disabled={creatingInFolderId !== undefined} title="New Folder" className="text-[#2a2a2a]/40 dark:text-white/30 hover:text-[#6f8f88] transition-colors disabled:opacity-20 text-sm leading-none">+</button>
+            <button onClick={() => startCreatingFolder(null)} disabled={creatingInFolderId !== undefined} title="New Folder" className="text-white/25 hover:text-[#6f8f88] transition-colors disabled:opacity-20 text-sm leading-none">+</button>
           </div>
         </div>
 
         {/* Section label */}
         <div className="px-3 pt-2 pb-0.5 flex-shrink-0">
-          <p className="text-[10px] font-semibold tracking-widest text-[#2a2a2a]/40 dark:text-white/30 uppercase">{contractName}</p>
+          <p className="text-[10px] font-semibold tracking-widest text-white/25 uppercase">{contractName}</p>
         </div>
 
         {/* Scrollable tree — also a root-level drop target */}
         <div
-          className={`flex-1 overflow-y-auto py-1 ${draggedDocId && dropTargetId === 'root' ? 'bg-[#6f8f88]/8 ring-1 ring-inset ring-[#6f8f88]/30' : ''}`}
+          className={`flex-1 overflow-y-auto py-1 ${draggedDocId && dropTargetId === 'root' ? 'bg-[#6f8f88]/8 ring-1 ring-inset ring-[#6f8f88]/30' : 'bg-transparent'}`}
           onDragOver={e => { if (draggedDocId) { e.preventDefault(); setDropTargetId('root') } }}
           onDrop={e => { e.preventDefault(); if (draggedDocId) handleFolderDrop(null) }}
         >
@@ -2034,7 +1836,7 @@ export function ContractWorkspace({ contractId, contractName, token, initialFile
                     onClick={() => fileInputRef.current?.click()}
                   >
                     <div className="text-2xl mb-1 opacity-30">📂</div>
-                    <p className="text-[11px] text-[#2a2a2a]/40 dark:text-white/30 leading-snug">Drop files here to<br/>begin analysis</p>
+                    <p className="text-[11px] text-white/30 leading-snug">Drop files here to<br/>begin analysis</p>
                   </div>
                 )}
                 <FolderTree
@@ -2066,13 +1868,13 @@ export function ContractWorkspace({ contractId, contractName, token, initialFile
                   return (
                     <div
                       onClick={() => setPreviewDoc(isActive ? null : CONTENT_MD_DOC)}
-                      className={`flex items-center gap-1.5 py-[3px] px-3 cursor-pointer select-none transition-colors ${isActive ? 'bg-[#6f8f88]/20' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
+                      className={`flex items-center gap-1.5 py-[3px] px-3 cursor-pointer select-none transition-colors ${isActive ? 'bg-[#6f8f88]/20' : 'hover:bg-white/5'}`}
                     >
                       <span style={{ background: '#083fa1', color: '#fff' }}
                         className="inline-flex items-center justify-center w-4 h-4 rounded-[3px] text-[7px] font-bold font-mono flex-shrink-0">
                         MD
                       </span>
-                      <span className={`text-[13px] truncate ${isActive ? 'text-[#6f8f88]' : 'text-[#2a2a2a]/50 dark:text-white/40'}`}>
+                      <span className={`text-[13px] truncate ${isActive ? 'text-[#6f8f88]' : 'text-white/40'}`}>
                         content.md
                       </span>
                     </div>
@@ -2083,15 +1885,15 @@ export function ContractWorkspace({ contractId, contractName, token, initialFile
           })()}
 
           {!contract && (
-            <p className="text-[12px] text-[#2a2a2a]/30 dark:text-white/20 px-3 py-2">Loading…</p>
+            <p className="text-[12px] text-white/20 px-3 py-2">Loading…</p>
           )}
         </div>
 
         {/* Upload buttons */}
-        <div className="border-t border-black/10 dark:border-white/10 p-2 flex gap-1 flex-shrink-0">
+        <div className="border-t border-white/6 p-2 flex gap-1 flex-shrink-0">
           <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileInput} />
           <button onClick={() => fileInputRef.current?.click()} disabled={isUploading}
-            className="flex-1 text-[11px] py-1 rounded bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-[#2a2a2a]/60 dark:text-white/50 disabled:opacity-30">
+            className="flex-1 text-[11px] py-1 rounded bg-white/5 hover:bg-white/10 transition-colors text-white/40 disabled:opacity-30">
             Upload
           </button>
           <button onClick={downloadZip} disabled={isUploading}
@@ -2105,7 +1907,7 @@ export function ContractWorkspace({ contractId, contractName, token, initialFile
       <div className="flex-1 overflow-hidden flex flex-col">
         <AnimatePresence mode="wait">
           {previewDoc ? (
-            <motion.div key={previewDoc.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden">
+            <motion.div key={previewDoc.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden bg-transparent">
               <FilePreview
                 doc={previewDoc}
                 contractId={contractId}
@@ -2118,13 +1920,13 @@ export function ContractWorkspace({ contractId, contractName, token, initialFile
               />
             </motion.div>
           ) : (
-            <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col items-center justify-center gap-3">
+            <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col items-center justify-center gap-3 bg-transparent">
               {isUploading ? (
                 <p className="text-sm text-[#6f8f88] animate-pulse">{uploadProgress ?? 'Uploading…'}</p>
               ) : (
                 <>
                   <div
-                    className="border-2 border-dashed border-[#6f8f88]/25 rounded-2xl p-14 flex flex-col items-center gap-3 cursor-pointer hover:border-[#6f8f88]/50 hover:bg-[#6f8f88]/5 transition-colors"
+                    className="border border-dashed border-white/15 rounded-2xl p-14 flex flex-col items-center gap-3 cursor-pointer hover:border-[#6f8f88]/50 hover:bg-[#6f8f88]/5 transition-colors"
                     onClick={() => fileInputRef.current?.click()}
                     onDragOver={e => e.preventDefault()}
                     onDrop={async e => { e.preventDefault(); e.stopPropagation(); await handleFiles(Array.from(e.dataTransfer.files)) }}
@@ -2133,12 +1935,12 @@ export function ContractWorkspace({ contractId, contractName, token, initialFile
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 11v6m-3-3l3-3 3 3" />
                     </svg>
-                    <p className="text-sm text-[#2a2a2a]/40 dark:text-white/30 select-none text-center leading-relaxed">
+                    <p className="text-sm text-white/30 select-none text-center leading-relaxed">
                       Drop files here to begin analysis<br/>
-                      <span className="text-xs text-[#2a2a2a]/25 dark:text-white/20">or click to browse</span>
+                      <span className="text-xs text-white/15">or click to browse</span>
                     </p>
                   </div>
-                  <p className="text-[11px] text-[#2a2a2a]/25 dark:text-white/15 select-none">
+                  <p className="text-[11px] text-white/20 select-none">
                     Select a file from the sidebar to preview
                   </p>
                 </>

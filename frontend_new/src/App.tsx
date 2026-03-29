@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useLocation } from 'react-router-dom'
 import { DocumentViewer } from './components/DocumentViewer'
 import { ContentUnderstander } from './components/ContentUnderstander'
 import { Login } from './components/Login'
@@ -9,7 +10,8 @@ import { OAuthCallback } from './components/OAuthCallback'
 import { LandingPage } from './components/landing'
 import { LandingPage as NewLandingPage } from './frontpage'
 import { ThemeToggle } from './components/ThemeToggle'
-import { ContractWorkspace } from './components/ContractWorkspace'
+import { ContractsGrid } from './components/ContractsGrid'
+import { ContractBuilder } from './components/ContractBuilder'
 
 const API_BASE_URL_CONST = 'http://localhost:8002/api/v1'
 
@@ -18,7 +20,9 @@ interface ContractCreated {
   name: string
   status: string
   pinned: boolean
+  shared: boolean
   created_at: string
+  updated_at: string
   document_count: number
 }
 
@@ -239,86 +243,75 @@ interface Contract {
   name: string
   status: string
   pinned: boolean
+  shared: boolean
   created_at: string
+  updated_at: string
   document_count: number
 }
 
 // Defined OUTSIDE App so its type identity is stable — no remount on App re-renders
-function ContractItem({ contract, isActive, onOpen, onPin, onDelete }: {
-  contract: Contract
-  isActive: boolean
-  onOpen: () => void
-  onPin: (pinned: boolean) => void
-  onDelete: () => void
+
+// ─── Sidebar nav components ───────────────────────────────────────────────────
+
+function NavItem({ icon, label, active = false, onClick, shortcut }: {
+  icon: React.ReactNode; label: string; active?: boolean
+  onClick?: () => void; shortcut?: string
 }) {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-sm transition-colors text-left ${
+        active
+          ? 'bg-black/6 dark:bg-white/8 text-black dark:text-white font-medium'
+          : 'text-black/55 dark:text-white/50 hover:bg-black/4 dark:hover:bg-white/6 hover:text-black dark:hover:text-white'
+      }`}
+    >
+      <span className="flex-shrink-0 w-[18px] h-[18px] flex items-center justify-center opacity-70">{icon}</span>
+      <span className="flex-1 truncate">{label}</span>
+      {shortcut && (
+        <kbd className="text-[10px] px-1.5 py-0.5 rounded-md bg-black/6 dark:bg-white/8 text-black/35 dark:text-white/30 font-mono flex-shrink-0">
+          {shortcut}
+        </kbd>
+      )}
+    </button>
+  )
+}
 
-  useEffect(() => {
-    if (!menuOpen) return
-    const handler = (e: MouseEvent) => {
-      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [menuOpen])
-
+function IconNavItem({ icon, label, active = false, onClick }: {
+  icon: React.ReactNode; label: string; active?: boolean; onClick?: () => void
+}) {
   return (
     <div className="relative group">
-      <motion.div
-        variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-        whileHover={{ scale: 1.02, x: 4 }}
-        onClick={onOpen}
-        className={`p-3 rounded-xl backdrop-blur-sm border cursor-pointer transition-all ${
-          isActive
-            ? 'bg-[#6f8f88]/20 border-[#6f8f88]/30'
-            : 'bg-white/30 dark:bg-white/5 border-black/10 dark:border-white/10 hover:bg-white/40 dark:hover:bg-white/10'
+      <button
+        onClick={onClick}
+        className={`w-9 h-9 flex items-center justify-center rounded-lg transition-colors ${
+          active ? 'bg-black/8 dark:bg-white/10 text-black dark:text-white' : 'text-black/40 dark:text-white/35 hover:bg-black/6 dark:hover:bg-white/8 hover:text-black dark:hover:text-white'
         }`}
       >
-        <div className="flex items-start gap-2">
-          <div className="flex-1 min-w-0 pr-5">
-            <p className="font-medium text-sm truncate text-[#1A1A1A] dark:text-white">{contract.name}</p>
-            <p className="text-xs text-[#2a2a2a]/60 dark:text-white/60 mt-0.5">
-              {contract.document_count} file{contract.document_count !== 1 ? 's' : ''}
-            </p>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Three-dot button */}
-      <button
-        onClick={e => { e.stopPropagation(); setMenuOpen(v => !v) }}
-        className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-black/10 dark:hover:bg-white/10 transition-all text-[#2a2a2a]/60 dark:text-white/60 text-xs leading-none"
-      >
-        •••
+        {icon}
       </button>
-
-      {/* Dropdown menu */}
-      {menuOpen && (
-        <div
-          ref={menuRef}
-          className="absolute right-0 top-full mt-1 z-50 w-36 rounded-xl overflow-hidden backdrop-blur-xl bg-white/80 dark:bg-[#2a2a2a]/90 border border-black/10 dark:border-white/10 shadow-xl"
-        >
-          <button
-            onClick={e => { e.stopPropagation(); onPin(!contract.pinned); setMenuOpen(false) }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1A1A1A] dark:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-left"
-          >
-            <span>📌</span>
-            {contract.pinned ? 'Unpin' : 'Pin'}
-          </button>
-          <div className="h-px bg-black/10 dark:bg-white/10" />
-          <button
-            onClick={e => { e.stopPropagation(); onDelete(); setMenuOpen(false) }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left"
-          >
-            <span>🗑️</span>
-            Delete
-          </button>
+      <div className="absolute left-full ml-2.5 top-1/2 -translate-y-1/2 z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-100">
+        <div className="bg-[#1a1a1a] dark:bg-[#e5e5e5] text-white dark:text-black text-xs rounded-lg px-2.5 py-1.5 whitespace-nowrap shadow-xl font-medium">
+          {label}
         </div>
-      )}
+      </div>
     </div>
   )
 }
+
+// ─── SVG icons ────────────────────────────────────────────────────────────────
+const IcHome = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+const IcSearch = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+const IcGrid = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+const IcStar = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+const IcPerson = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+const IcPeople = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.3 3.1-6 7-6s7 2.7 7 6"/><circle cx="17" cy="8" r="3"/><path d="M22 20c0-2.8-2.2-5-5-5"/></svg>
+const IcDiamond = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20"/></svg>
+const IcSidebarOpen = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+const IcSignOut = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+const IcBuilder = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]"><circle cx="5" cy="12" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="19" cy="19" r="2"/><path d="M7 12h4m4-5.5-4 4m4 6-4-4"/></svg>
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 function App() {
   const navigate = useNavigate()
@@ -331,11 +324,19 @@ function App() {
   const [activeContractId, setActiveContractId] = useState<string | null>(null)
   const [activeContractName, setActiveContractName] = useState<string>('')
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [contractFilter, setContractFilter] = useState<'all' | 'pinned' | 'created' | 'shared'>('all')
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null)
   const [activeSpanId, setActiveSpanId] = useState<string | null>(null)
   const [activeSpan, setActiveSpan] = useState<any>(null)
   const [hasAnimatedGreeting, setHasAnimatedGreeting] = useState(false)
   const [greetingIndex] = useState(() => Math.floor(Math.random() * 55)) // Random on initial load, stable during session
+
+  // Collapse sidebar whenever a contract is opened
+  useEffect(() => {
+    if (activeContractId) setIsSidebarCollapsed(true)
+  }, [activeContractId])
 
   // Handle greeting animation - moved to top level to avoid hooks inside nested component
   useEffect(() => {
@@ -465,42 +466,6 @@ function App() {
 
   const pendingFilesRef = useRef<File[]>([])
 
-  const pinContract = async (contractId: string, pinned: boolean) => {
-    const tok = token || localStorage.getItem('token')
-    if (!tok) return
-    try {
-      const res = await fetch(`${API_BASE_URL}/contracts/${contractId}/pin`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pinned })
-      })
-      if (res.ok) {
-        setContracts(prev => prev.map(c => c.id === contractId ? { ...c, pinned } : c))
-      }
-    } catch (e) {
-      console.error('Failed to pin contract', e)
-    }
-  }
-
-  const deleteContractItem = async (contractId: string) => {
-    const tok = token || localStorage.getItem('token')
-    if (!tok) return
-    try {
-      const res = await fetch(`${API_BASE_URL}/contracts/${contractId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${tok}` }
-      })
-      if (res.ok) {
-        setContracts(prev => prev.filter(c => c.id !== contractId))
-        if (activeContractId === contractId) {
-          setActiveContractId(null)
-          setActiveContractName('')
-        }
-      }
-    } catch (e) {
-      console.error('Failed to delete contract', e)
-    }
-  }
 
   const handleContractCreated = (contract: ContractCreated, files?: File[]) => {
     pendingFilesRef.current = files ?? []
@@ -536,183 +501,222 @@ function App() {
       return <Navigate to="/login" replace />
     }
 
+    const location = useLocation()
+    const isGridRoute = ['/app/allcontracts', '/app/me', '/app/shared'].includes(location.pathname)
+
     // Only animate on first render of the landing page (when no document or contract is active)
-    const shouldAnimateGreeting = !hasAnimatedGreeting && !activeDocumentId && !activeContractId
+    const shouldAnimateGreeting = !hasAnimatedGreeting && !activeDocumentId && !activeContractId && !isGridRoute
+
+    // ── Sidebar data ──────────────────────────────────────────────────────────
+    const filteredContracts = contracts.filter(c => {
+      if (contractFilter === 'pinned') return c.pinned
+      return true
+    })
+    const recentContracts = [...contracts]
+      .sort((a, b) => (b.updated_at || b.created_at).localeCompare(a.updated_at || a.created_at))
+      .slice(0, 10)
+    const userInitial = user?.username?.charAt(0).toUpperCase() ?? '?'
+
+    // Close user menu on outside click
+    const handleUserMenuBlur = (e: React.FocusEvent<HTMLDivElement>) => {
+      if (!e.currentTarget.contains(e.relatedTarget as Node)) setUserMenuOpen(false)
+    }
 
     return (
-      <div
-        className="h-screen w-screen flex bg-[#C8C8BF] dark:bg-[#1a1a1a] text-[#1A1A1A] dark:text-[#e5e5e5] font-sans overflow-hidden relative transition-colors duration-300"
-      >
-        {/* Sidebar - Management View */}
+      <div className="h-screen w-screen flex bg-white dark:bg-black text-[#1A1A1A] dark:text-[#e5e5e5] font-sans overflow-hidden relative transition-colors duration-300">
+
+        {/* ── Sidebar ── */}
         <motion.div
-          initial={{ width: isSidebarCollapsed ? 80 : 320 }}
-          animate={{ width: isSidebarCollapsed ? 80 : 320 }}
+          initial={{ width: isSidebarCollapsed ? 56 : 260 }}
+          animate={{ width: isSidebarCollapsed ? 56 : 260 }}
           transition={springConfig}
-          className="relative backdrop-blur-md bg-[#b8b8af]/90 dark:bg-[#252525]/90 border-r border-black/10 dark:border-white/10 flex flex-col shadow-lg z-10"
+          className="relative flex-shrink-0 bg-white dark:bg-black border-r border-black/8 dark:border-white/8 flex flex-col z-10 overflow-hidden"
         >
-          {/* Header */}
-          <div className="p-4 border-b border-black/10 dark:border-white/10">
-            <motion.div
-              className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-between'}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              {!isSidebarCollapsed && (
-                <motion.h2
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="text-xl font-bold text-[#6f8f88]"
-                >
-                  Authentia AI
-                </motion.h2>
-              )}
-              <div className={`flex items-center ${isSidebarCollapsed ? 'flex-col gap-3' : 'flex-row gap-2'}`}>
-                {!isSidebarCollapsed && <ThemeToggle />}
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                  className="p-2 hover:bg-black/10 dark:hover:bg-white/10 rounded-lg transition-colors text-[#2a2a2a] dark:text-white"
-                >
-                  {isSidebarCollapsed ? '→' : '←'}
-                </motion.button>
-                {isSidebarCollapsed && <ThemeToggle />}
+          {isSidebarCollapsed ? (
+            /* ── Collapsed: icon rail ── */
+            <div className="flex flex-col items-center py-3 gap-1 flex-1 overflow-y-auto px-2">
+              {/* Expand button */}
+              <IconNavItem icon={<IcSidebarOpen />} label="Expand sidebar" onClick={() => setIsSidebarCollapsed(false)} />
+              {/* Avatar */}
+              <div className="relative group my-1">
+                {user?.profile_picture ? (
+                  <img src={user.profile_picture} alt={user.username} referrerPolicy="no-referrer"
+                    className="w-8 h-8 rounded-lg object-cover cursor-pointer" onClick={() => setUserMenuOpen(v => !v)} />
+                ) : (
+                  <button onClick={() => setUserMenuOpen(v => !v)}
+                    className="w-8 h-8 rounded-lg bg-[#6f8f88] flex items-center justify-center text-white text-sm font-bold">
+                    {userInitial}
+                  </button>
+                )}
+                <div className="absolute left-full ml-2.5 top-1/2 -translate-y-1/2 z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-100">
+                  <div className="bg-[#1a1a1a] dark:bg-[#e5e5e5] text-white dark:text-black text-xs rounded-lg px-2.5 py-1.5 whitespace-nowrap shadow-xl font-medium">
+                    {user?.username ?? 'Account'}
+                  </div>
+                </div>
               </div>
-            </motion.div>
-          </div>
-
-          {/* Contracts List */}
-          {!isSidebarCollapsed && (
-            <div className="flex-1 overflow-y-auto p-4">
-              <div className="flex items-center justify-between mb-3 px-2">
-                <p className="text-xs text-[#2a2a2a]/60 dark:text-white/60">CONTRACTS</p>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => { setActiveContractId(null); setActiveContractName(''); setActiveDocumentId(null) }}
-                  className="text-xs px-2 py-1 bg-[#6f8f88]/20 text-[#6f8f88] rounded-lg hover:bg-[#6f8f88]/30 transition-colors"
-                >
-                  + New
-                </motion.button>
-              </div>
-              {contracts.length === 0 ? (
-                <p className="text-xs text-[#2a2a2a]/40 dark:text-white/40 px-2 py-4 text-center">No contracts yet</p>
-              ) : (
-                <motion.div
-                  className="space-y-4"
-                  initial="hidden"
-                  animate="visible"
-                  variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
-                >
-                  {contracts.filter(c => c.pinned).length > 0 && (
-                    <div>
-                      <p className="text-xs text-[#2a2a2a]/50 dark:text-white/40 px-2 mb-2 flex items-center gap-1">
-                        <span>📌</span> PINNED
-                      </p>
-                      <div className="space-y-2">
-                        {contracts.filter(c => c.pinned).map(contract => (
-                          <ContractItem
-                            key={contract.id}
-                            contract={contract}
-                            isActive={activeContractId === contract.id}
-                            onOpen={() => {
-                              setActiveContractId(contract.id)
-                              setActiveContractName(contract.name)
-                              setActiveDocumentId(null)
-                              navigate('/app')
-                            }}
-                            onPin={(pinned) => pinContract(contract.id, pinned)}
-                            onDelete={() => deleteContractItem(contract.id)}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {contracts.filter(c => !c.pinned).length > 0 && (
-                    <div>
-                      {contracts.filter(c => c.pinned).length > 0 && (
-                        <p className="text-xs text-[#2a2a2a]/50 dark:text-white/40 px-2 mb-2">CONTRACTS</p>
-                      )}
-                      <div className="space-y-2">
-                        {contracts.filter(c => !c.pinned).map(contract => (
-                          <ContractItem
-                            key={contract.id}
-                            contract={contract}
-                            isActive={activeContractId === contract.id}
-                            onOpen={() => {
-                              setActiveContractId(contract.id)
-                              setActiveContractName(contract.name)
-                              setActiveDocumentId(null)
-                              navigate('/app')
-                            }}
-                            onPin={(pinned) => pinContract(contract.id, pinned)}
-                            onDelete={() => deleteContractItem(contract.id)}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </motion.div>
-              )}
+              <div className="h-px w-8 bg-black/8 dark:bg-white/8 my-1" />
+              <IconNavItem icon={<IcHome />} label="Home" onClick={() => navigate('/')} />
+              <IconNavItem icon={<IcSearch />} label="Search" />
+              <IconNavItem icon={<IcBuilder />} label="Builder" active={location.pathname === '/app/builder'} onClick={() => navigate('/app/builder')} />
+              <div className="h-px w-8 bg-black/8 dark:bg-white/8 my-1" />
+              <IconNavItem icon={<IcGrid />} label="All contracts" active={location.pathname === '/app/allcontracts'} onClick={() => { setContractFilter('all'); navigate('/app/allcontracts') }} />
+              <IconNavItem icon={<IcStar />} label="Pinned" active={contractFilter === 'pinned'} onClick={() => { setContractFilter('pinned'); navigate('/app/allcontracts') }} />
+              <IconNavItem icon={<IcPerson />} label="Created by me" active={location.pathname === '/app/me'} onClick={() => { setContractFilter('all'); navigate('/app/me') }} />
+              <IconNavItem icon={<IcPeople />} label="Shared with me" active={location.pathname === '/app/shared'} onClick={() => { setContractFilter('all'); navigate('/app/shared') }} />
             </div>
-          )}
-
-          {/* User Info & Actions - Bottom */}
-          <div className="p-4 border-t border-black/10 dark:border-white/10">
-            {!isSidebarCollapsed && (
-              <div className="space-y-3">
-                {/* User Info */}
-                {user && (
-                  <div className="flex items-center gap-3">
-                    {user.profile_picture ? (
-                      <img
-                        src={user.profile_picture}
-                        alt={user.username}
-                        className="w-8 h-8 rounded-full object-cover"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-[#6f8f88] flex items-center justify-center text-white text-sm font-medium">
-                        {user.username?.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#1A1A1A] dark:text-white truncate">{user.username}</p>
-                      <p className="text-xs text-[#2a2a2a]/50 dark:text-white/50 truncate">{user.email}</p>
-                    </div>
+          ) : (
+            /* ── Expanded ── */
+            <>
+              {/* Header: workspace selector */}
+              <div className="flex items-center gap-2 px-3 py-3 border-b border-black/6 dark:border-white/6 flex-shrink-0">
+                {user?.profile_picture ? (
+                  <img src={user.profile_picture} alt={user.username} referrerPolicy="no-referrer"
+                    className="w-6 h-6 rounded-md object-cover flex-shrink-0" />
+                ) : (
+                  <div className="w-6 h-6 rounded-md bg-[#6f8f88] flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0">
+                    {userInitial}
                   </div>
                 )}
-                {/* Action Buttons */}
-                <div className="flex items-center gap-2">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate('/')}
-                    className="flex-1 px-3 py-2 text-xs bg-[#6f8f88]/20 text-[#6f8f88] rounded-lg hover:bg-[#6f8f88]/30 transition-colors flex items-center justify-center gap-1"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                    </svg>
-                    Home
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleLogout}
-                    className="flex-1 px-3 py-2 text-xs bg-red-500/20 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
-                  >
-                    Logout
-                  </motion.button>
-                </div>
-                {/* Version */}
-                <p className="text-xs text-[#2a2a2a]/40 dark:text-white/40 text-center">Forensic Document Engine v1.0</p>
+                <span className="text-sm font-semibold text-black dark:text-white flex-1 truncate">
+                  {user?.username ?? 'Authentia'}
+                </span>
+                <button
+                  onClick={() => setIsSidebarCollapsed(true)}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-black/6 dark:hover:bg-white/8 transition-colors text-black/35 dark:text-white/35 flex-shrink-0"
+                >
+                  <IcSidebarOpen />
+                </button>
+              </div>
+
+              {/* Nav items */}
+              <div className="flex-1 overflow-y-auto px-2 py-2">
+                <NavItem icon={<IcHome />} label="Home" onClick={() => navigate('/')} />
+                <NavItem icon={<IcSearch />} label="Search" shortcut="⌘K" />
+                <NavItem icon={<IcBuilder />} label="Builder" active={location.pathname === '/app/builder'} onClick={() => navigate('/app/builder')} />
+
+                {/* Contracts section */}
+                <p className="text-[11px] font-semibold text-black/35 dark:text-white/30 uppercase tracking-widest px-2.5 pt-5 pb-1.5">
+                  Contracts
+                </p>
+                <NavItem icon={<IcGrid />} label="All contracts" active={location.pathname === '/app/allcontracts'} onClick={() => { setContractFilter('all'); navigate('/app/allcontracts') }} />
+                <NavItem icon={<IcStar />} label="Pinned" active={contractFilter === 'pinned' && location.pathname === '/app/allcontracts'} onClick={() => { setContractFilter('pinned'); navigate('/app/allcontracts') }} />
+                <NavItem icon={<IcPerson />} label="Created by me" active={location.pathname === '/app/me'} onClick={() => { setContractFilter('all'); navigate('/app/me') }} />
+                <NavItem icon={<IcPeople />} label="Shared with me" active={location.pathname === '/app/shared'} onClick={() => { setContractFilter('all'); navigate('/app/shared') }} />
+
+
+                {/* Recents section */}
+                {recentContracts.length > 0 && (
+                  <>
+                    <p className="text-[11px] font-semibold text-black/35 dark:text-white/30 uppercase tracking-widest px-2.5 pt-5 pb-1.5">
+                      Recents
+                    </p>
+                    {recentContracts.map(contract => (
+                      <NavItem
+                        key={contract.id}
+                        icon={<IcDiamond />}
+                        label={contract.name}
+                        active={activeContractId === contract.id}
+                        onClick={() => { setActiveContractId(contract.id); setActiveContractName(contract.name); setActiveDocumentId(null); navigate('/app') }}
+                      />
+                    ))}
+                  </>
+                )}
+              </div>
+
+              {/* Bottom: new contract + theme */}
+              <div className="px-3 py-3 border-t border-black/6 dark:border-white/6 flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={() => { setActiveContractId(null); setActiveContractName(''); setActiveDocumentId(null) }}
+                  className="flex-1 text-sm py-1.5 rounded-lg border border-black/10 dark:border-white/10 hover:bg-black/4 dark:hover:bg-white/6 transition-colors text-black/50 dark:text-white/45 text-left px-3"
+                >
+                  + New contract
+                </button>
+                <ThemeToggle />
+              </div>
+            </>
+          )}
+        </motion.div>
+
+        {/* ── User menu (top-right floating) ── */}
+        <div
+          ref={userMenuRef}
+          className="absolute top-3 right-4 z-50"
+          tabIndex={-1}
+          onBlur={handleUserMenuBlur}
+        >
+          <button
+            onClick={() => setUserMenuOpen(v => !v)}
+            className="flex items-center justify-center"
+          >
+            {user?.profile_picture ? (
+              <img src={user.profile_picture} alt={user.username} referrerPolicy="no-referrer"
+                className="w-8 h-8 rounded-full object-cover ring-2 ring-black/8 dark:ring-white/10 hover:ring-[#6f8f88]/50 transition-all" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-[#6f8f88] flex items-center justify-center text-white text-sm font-bold ring-2 ring-[#6f8f88]/20 hover:ring-[#6f8f88]/50 transition-all">
+                {userInitial}
               </div>
             )}
-          </div>
-        </motion.div>
+          </button>
+
+          <AnimatePresence>
+            {userMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                transition={{ duration: 0.12 }}
+                className="absolute right-0 top-full mt-2 w-56 rounded-2xl bg-white dark:bg-[#1a1a1a] border border-black/8 dark:border-white/10 shadow-2xl overflow-hidden"
+              >
+                {/* User info header */}
+                <div className="flex items-center gap-3 px-4 py-3 border-b border-black/6 dark:border-white/6">
+                  {user?.profile_picture ? (
+                    <img src={user.profile_picture} alt={user.username} referrerPolicy="no-referrer"
+                      className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-[#6f8f88] flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                      {userInitial}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-black dark:text-white truncate">{user?.username}</p>
+                    <p className="text-xs text-black/45 dark:text-white/40 truncate">{user?.email}</p>
+                  </div>
+                </div>
+                {/* Sign out */}
+                <button
+                  onClick={() => { setUserMenuOpen(false); handleLogout() }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-black/70 dark:text-white/70 hover:bg-black/4 dark:hover:bg-white/6 transition-colors"
+                >
+                  <IcSignOut />
+                  Sign out
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* Main Workspace */}
         <div className="flex-1 flex overflow-hidden relative">
+          {isGridRoute ? (
+            <ContractsGrid
+              key={location.pathname + contractFilter}
+              title={
+                location.pathname === '/app/allcontracts'
+                  ? (contractFilter === 'pinned' ? 'Pinned' : 'All Contracts')
+                  : location.pathname === '/app/me'
+                  ? 'Created by Me'
+                  : 'Shared with Me'
+              }
+              contracts={location.pathname === '/app/shared' ? [] : contracts}
+              user={user}
+              token={token}
+              filter={location.pathname === '/app/allcontracts' ? (contractFilter === 'pinned' ? 'pinned' : 'all') : location.pathname === '/app/me' ? 'me' : 'shared'}
+              hideNew={location.pathname === '/app/me' || location.pathname === '/app/shared' || contractFilter === 'pinned'}
+              onOpenContract={(id, name) => { setActiveContractId(id); setActiveContractName(name); setActiveDocumentId(null); navigate('/app') }}
+              onNewContract={() => { setActiveContractId(null); setActiveContractName(''); setActiveDocumentId(null); navigate('/app') }}
+              onContractsChange={setContracts}
+            />
+          ) : (
           <AnimatePresence mode="wait">
             {activeDocumentId ? (
               <>
@@ -730,17 +734,11 @@ function App() {
                 />
               </>
             ) : activeContractId ? (
-              <ContractWorkspace
+              <ContractBuilder
                 key={`contract-${activeContractId}`}
                 contractId={activeContractId}
                 contractName={activeContractName}
                 token={token || localStorage.getItem('token') || ''}
-                initialFiles={pendingFilesRef.current}
-                onFileOpen={(docId) => setActiveDocumentId(docId)}
-                onClose={() => {
-                  setActiveContractId(null)
-                  setActiveContractName('')
-                }}
               />
             ) : (
               /* Landing State - Upload Portal */
@@ -807,6 +805,7 @@ function App() {
               </motion.div>
             )}
           </AnimatePresence>
+          )}
         </div>
       </div>
     )
@@ -868,6 +867,10 @@ function App() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/auth/success" element={<OAuthCallback />} />
       <Route path="/app" element={<MainApp />} />
+      <Route path="/app/allcontracts" element={<MainApp />} />
+      <Route path="/app/me" element={<MainApp />} />
+      <Route path="/app/shared" element={<MainApp />} />
+      <Route path="/app/builder" element={<ContractBuilder />} />
     </Routes>
   )
 }
