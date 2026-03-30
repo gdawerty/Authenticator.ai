@@ -1,43 +1,233 @@
 #!/bin/bash
+# ─────────────────────────────────────────────────────────────────────────────
+# Authentia AI — Smart Start Script
+# Detects your OS, chip, GPU, and RAM then tunes the server accordingly.
+# ─────────────────────────────────────────────────────────────────────────────
 
-# Authentia AI - Start Script
-# Runs both backend and frontend simultaneously
+set -e
 
-echo "🚀 Starting Authentia AI..."
+# ── Colors ────────────────────────────────────────────────────────────────────
+RED='\033[0;31m'; YELLOW='\033[1;33m'; GREEN='\033[0;32m'
+CYAN='\033[0;36m'; BOLD='\033[1m'; DIM='\033[2m'; RESET='\033[0m'
+
+info()    { echo -e "${CYAN}  ▸${RESET} $1"; }
+success() { echo -e "${GREEN}  ✓${RESET} $1"; }
+warn()    { echo -e "${YELLOW}  ⚠${RESET} $1"; }
+error()   { echo -e "${RED}  ✗ $1${RESET}"; exit 1; }
+header()  { echo -e "\n${BOLD}$1${RESET}"; }
+
 echo ""
+echo -e "${BOLD}  Authentia AI${RESET}"
+echo -e "${DIM}  ─────────────────────────────────────${RESET}"
 
-# Kill any existing processes on ports 8002 and 5175
-lsof -ti:8002 | xargs kill -9 2>/dev/null
-lsof -ti:5175 | xargs kill -9 2>/dev/null
+# ── 1. OS Detection ───────────────────────────────────────────────────────────
+header "[ 1/5 ] Detecting system..."
 
-# Start backend in background
-echo "📦 Starting Backend (port 8002)..."
-cd backend_new
-source venv/bin/activate 2>/dev/null || true
-uvicorn app.main:app --reload --reload-dir app --port 8002 &
+OS="unknown"
+case "$(uname -s)" in
+  Darwin)              OS="macos"   ;;
+  Linux)               OS="linux"   ;;
+  MINGW*|CYGWIN*|MSYS*) OS="windows" ;;
+esac
+
+# ── 2. Hardware Detection ─────────────────────────────────────────────────────
+CHIP="unknown"
+CHIP_LABEL="Unknown"
+RAM_GB=8
+WORKERS=1
+PROFILE="low"
+GPU=""
+
+if [ "$OS" = "macos" ]; then
+  ARCH=$(uname -m)
+  RAM_BYTES=$(sysctl -n hw.memsize 2>/dev/null || echo 8589934592)
+  RAM_GB=$(( RAM_BYTES / 1073741824 ))
+
+  if [ "$ARCH" = "arm64" ]; then
+    # Apple Silicon — read chip name from system_profiler
+    CHIP_NAME=$(system_profiler SPHardwareDataType 2>/dev/null \
+      | grep "Chip" | awk -F': ' '{print $2}' | xargs)
+    [ -z "$CHIP_NAME" ] && CHIP_NAME="Apple Silicon"
+    CHIP="apple_silicon"
+    CHIP_LABEL="$CHIP_NAME"
+
+    if echo "$CHIP_NAME" | grep -qi "M4"; then
+      PROFILE="high"
+    elif echo "$CHIP_NAME" | grep -qiE "M2|M3"; then
+      PROFILE="medium"
+    else
+      PROFILE="medium"   # M1 or unknown Apple Silicon
+    fi
+  else
+    CHIP="intel_mac"
+    CHIP_LABEL=$(sysctl -n machdep.cpu.brand_string 2>/dev/null || echo "Intel Mac")
+    PROFILE="medium"
+  fi
+
+elif [ "$OS" = "linux" ]; then
+  RAM_KB=$(grep MemTotal /proc/meminfo 2>/dev/null | awk '{print $2}' || echo 8388608)
+  RAM_GB=$(( RAM_KB / 1048576 ))
+  CHIP_LABEL=$(grep "model name" /proc/cpuinfo 2>/dev/null \
+    | head -1 | awk -F': ' '{print $2}' | xargs || echo "Unknown CPU")
+  CPU_CORES=$(nproc 2>/dev/null || echo 2)
+
+  if command -v nvidia-smi &>/dev/null; then
+    GPU=$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1 || echo "")
+  fi
+
+  if [ $RAM_GB -ge 16 ] && [ $CPU_CORES -ge 8 ]; then
+    PROFILE="high"
+  elif [ $RAM_GB -ge 8 ] && [ $CPU_CORES -ge 4 ]; then
+    PROFILE="medium"
+  else
+    PROFILE="low"
+  fi
+
+elif [ "$OS" = "windows" ]; then
+  CHIP_LABEL="Windows"
+  PROFILE="low"
+fi
+
+# ── Map profile → server tuning ───────────────────────────────────────────────
+case "$PROFILE" in
+  high)
+    WORKERS=4; TIMEOUT_KEEP_ALIVE=30; LIMIT_MAX_REQUESTS=10000 ;;
+  medium)
+    WORKERS=2; TIMEOUT_KEEP_ALIVE=20; LIMIT_MAX_REQUESTS=5000  ;;
+  low)
+    WORKERS=1; TIMEOUT_KEEP_ALIVE=10; LIMIT_MAX_REQUESTS=500   ;;
+esac
+
+# Print hardware summary
+info "OS:      ${BOLD}$OS${RESET}"
+info "Chip:    ${BOLD}$CHIP_LABEL${RESET}"
+[ -n "$GPU" ] && info "GPU:     ${BOLD}$GPU${RESET}"
+info "RAM:     ${BOLD}${RAM_GB} GB${RESET}"
+info "Profile: ${BOLD}$PROFILE${RESET}  →  $WORKERS uvicorn worker(s)"
+
+if [ $RAM_GB -lt 8 ]; then
+  warn "Low RAM (${RAM_GB}GB) — running minimal mode. Some responses may be slower."
+  export PYTHONMALLOC=malloc
+fi
+
+# ── 3. Python Environment & Requirements ──────────────────────────────────────
+header "[ 2/5 ] Python environment..."
+
+VENV_DIR="backend_new/venv"
+
+if [ ! -d "$VENV_DIR" ]; then
+  info "Creating virtual environment..."
+  python3 -m venv "$VENV_DIR" \
+    || error "python3 -m venv failed. Install Python 3: https://python.org"
+  success "Virtual environment created"
+fi
+
+# Activate (Unix vs Windows git-bash)
+if [ -f "$VENV_DIR/bin/activate" ]; then
+  source "$VENV_DIR/bin/activate"
+elif [ -f "$VENV_DIR/Scripts/activate" ]; then
+  source "$VENV_DIR/Scripts/activate"
+else
+  error "Could not activate venv. Delete '$VENV_DIR' and re-run."
+fi
+
+# Quick import check across all key packages
+info "Checking Python packages..."
+if ! python -c "import fastapi, uvicorn, sqlalchemy, groq, httpx, jose, docx, fitz, pytesseract, pdf2image, PIL" \
+     &>/dev/null 2>&1; then
+  info "Installing backend requirements..."
+  pip install --upgrade pip -q
+  pip install -r backend_new/requirements.txt -q \
+    || error "pip install failed. Check your internet connection."
+  success "Backend requirements installed"
+else
+  success "All backend packages present"
+fi
+
+# ── 4. Node Environment & Requirements ───────────────────────────────────────
+header "[ 3/5 ] Node environment..."
+
+command -v node &>/dev/null \
+  || error "Node.js not found. Install LTS from https://nodejs.org"
+
+info "Node $(node --version) / npm $(npm --version)"
+
+if [ ! -d "frontend_new/node_modules" ]; then
+  info "Installing frontend packages (first run — takes ~30s)..."
+  (cd frontend_new && npm install --silent) \
+    || error "npm install failed."
+  success "Frontend packages installed"
+elif [ "frontend_new/package.json" -nt "frontend_new/node_modules/.package-lock.json" ] 2>/dev/null; then
+  info "Dependencies changed — syncing..."
+  (cd frontend_new && npm install --silent)
+  success "Frontend packages synced"
+else
+  success "Frontend packages up to date"
+fi
+
+# ── 5. Clear Ports & Launch ───────────────────────────────────────────────────
+header "[ 4/5 ] Clearing ports..."
+
+for PORT in 8002 5175 5174; do
+  PIDS=$(lsof -ti:$PORT 2>/dev/null || true)
+  if [ -n "$PIDS" ]; then
+    echo "$PIDS" | xargs kill -9 2>/dev/null || true
+    info "Freed port $PORT"
+  fi
+done
+success "Ports ready"
+
+header "[ 5/5 ] Launching..."
+
+# ── Backend ───────────────────────────────────────────────────────────────────
+info "Backend  → http://localhost:8002"
+
+UVICORN_ARGS="app.main:app --port 8002 --reload --reload-dir app --timeout-keep-alive $TIMEOUT_KEEP_ALIVE"
+
+# Low-end: restart workers after N requests to prevent memory bloat
+[ "$PROFILE" = "low" ] && UVICORN_ARGS="$UVICORN_ARGS --limit-max-requests $LIMIT_MAX_REQUESTS"
+
+# Apple Silicon: opt into uvloop (ships with uvicorn[standard])
+[ "$CHIP" = "apple_silicon" ] && export UVICORN_LOOP="uvloop"
+
+(cd backend_new && uvicorn $UVICORN_ARGS) &
 BACKEND_PID=$!
-cd ..
 
-# Give backend a moment to start
-sleep 2
+sleep 2   # Let backend bind before frontend dev server starts
 
-# Start frontend in background
-echo "🎨 Starting Frontend (port 5175)..."
-cd frontend_new
-npm run dev &
+# ── Frontend ──────────────────────────────────────────────────────────────────
+info "Frontend → http://localhost:5175"
+
+# Cap Node.js heap to prevent OOM on weak machines
+if   [ "$PROFILE" = "low"    ]; then export NODE_OPTIONS="--max-old-space-size=512"
+elif [ "$PROFILE" = "medium" ]; then export NODE_OPTIONS="--max-old-space-size=1024"
+fi
+
+(cd frontend_new && npm run dev) &
 FRONTEND_PID=$!
-cd ..
 
+# ── Done ──────────────────────────────────────────────────────────────────────
 echo ""
-echo "✅ Both servers starting!"
+echo -e "${GREEN}${BOLD}  ✓ Authentia AI is running${RESET}"
 echo ""
-echo "   Frontend: http://localhost:5175"
-echo "   Backend:  http://localhost:8002"
+echo -e "  ${DIM}Frontend${RESET}  http://localhost:5175"
+echo -e "  ${DIM}Backend${RESET}   http://localhost:8002"
+echo -e "  ${DIM}API Docs${RESET}  http://localhost:8002/api/v1/docs"
 echo ""
-echo "Press Ctrl+C to stop both servers"
+echo -e "  ${DIM}Profile: $PROFILE | $WORKERS worker(s) | ${RAM_GB}GB RAM | $CHIP_LABEL${RESET}"
+echo ""
+echo -e "  Press ${BOLD}Ctrl+C${RESET} to stop"
+echo ""
 
-# Handle Ctrl+C to kill both processes
-trap "echo ''; echo 'Stopping servers...'; kill $BACKEND_PID $FRONTEND_PID 2>/dev/null; exit" SIGINT SIGTERM
+# ── Graceful shutdown ─────────────────────────────────────────────────────────
+cleanup() {
+  echo ""
+  info "Shutting down..."
+  kill $BACKEND_PID $FRONTEND_PID 2>/dev/null || true
+  wait $BACKEND_PID $FRONTEND_PID 2>/dev/null || true
+  success "All stopped. Goodbye."
+  exit 0
+}
 
-# Wait for both processes
+trap cleanup SIGINT SIGTERM
 wait
