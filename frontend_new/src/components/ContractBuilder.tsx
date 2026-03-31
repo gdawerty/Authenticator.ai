@@ -43,8 +43,30 @@ const MARCH_CSS = `
   .blink { animation: blink 1.1s step-end infinite; }
 `
 
-const MOCK_TREE: FileNode[] = []
-const CANVAS_DOCS: { id: string; name: string; ext: string }[] = []
+const API = 'http://localhost:8002/api/v1'
+
+// Convert backend ContractDetail → FileNode[]
+function convertTree(folders: any[], rootDocs: any[]): FileNode[] {
+  const convertDocs = (docs: any[]): FileNode[] =>
+    docs.map(d => ({
+      id: d.id,
+      name: d.original_filename,
+      type: (d.type === 'pdf' ? 'pdf' : d.type === 'docx' ? 'docx' : 'pdf') as FileNode['type'],
+    }))
+  const convertFolders = (fols: any[]): FileNode[] =>
+    fols.map(f => ({
+      id: f.id,
+      name: f.name,
+      type: 'folder' as const,
+      children: [...convertFolders(f.children ?? []), ...convertDocs(f.documents ?? [])],
+    }))
+  return [...convertFolders(folders), ...convertDocs(rootDocs)]
+}
+
+function countFiles(nodes: FileNode[]): number {
+  return nodes.reduce((acc, n) =>
+    acc + (n.type !== 'folder' ? 1 : 0) + (n.children ? countFiles(n.children) : 0), 0)
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function uid() { return Math.random().toString(36).slice(2, 9) }
@@ -199,31 +221,88 @@ function TreeItem({ node, depth = 0, selected, onSelect }: {
   )
 }
 
-function VaultSidebar({ selected, onSelect }: { selected: string | null; onSelect: (id: string) => void }) {
+function VaultSidebar({
+  contractName, files, selected, onSelect, onUpload, onNewFolder, fileCount, uploading,
+}: {
+  contractName: string
+  files: FileNode[]
+  selected: string | null
+  onSelect: (id: string) => void
+  onUpload: (file: File) => void
+  onNewFolder: (name: string) => void
+  fileCount: number
+  uploading: boolean
+}) {
+  const uploadRef = useRef<HTMLInputElement>(null)
+  const [folderMode, setFolderMode] = useState(false)
+  const [folderName, setFolderName] = useState('')
+
+  const commitFolder = () => {
+    if (folderName.trim()) { onNewFolder(folderName.trim()); setFolderName('') }
+    setFolderMode(false)
+  }
+
   return (
     <div className="flex flex-col flex-shrink-0" style={{ width: 210, background: T.surface, borderRight: `1px solid ${T.border}` }}>
+      {/* Header: contract name */}
       <div className="flex items-center justify-between px-3 py-2.5 flex-shrink-0" style={{ borderBottom: `1px solid ${T.border}` }}>
-        <span className="text-[9px] font-semibold uppercase tracking-[0.14em]" style={{ color: T.muted }}>The Vault</span>
+        <span className="text-[10px] font-semibold truncate max-w-[120px]" style={{ color: T.text }} title={contractName}>
+          {contractName}
+        </span>
         <div className="flex gap-1">
-          {[
-            { title: 'New Folder', path: 'M10 4v12M4 10h12' },
-            { title: 'Upload', path: 'M10 13V7m0 0L7 10m3-3l3 3M3 17a7 7 0 1114 0H3z' },
-          ].map(({ title, path }) => (
-            <button key={title} title={title}
-              className="w-6 h-6 flex items-center justify-center rounded transition-colors"
-              style={{ border: `1px solid ${T.border2}`, color: T.muted }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = T.accentLt; (e.currentTarget as HTMLElement).style.borderColor = T.accent }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = T.muted; (e.currentTarget as HTMLElement).style.borderColor = T.border2 }}
-            >
-              <svg className="w-3 h-3" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-                <path d={path}/>
+          {/* New Folder */}
+          <button title="New Folder" onClick={() => setFolderMode(v => !v)}
+            className="w-6 h-6 flex items-center justify-center rounded transition-colors"
+            style={{ border: `1px solid ${folderMode ? T.accent : T.border2}`, color: folderMode ? T.accentLt : T.muted }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = T.accentLt; (e.currentTarget as HTMLElement).style.borderColor = T.accent }}
+            onMouseLeave={e => { if (!folderMode) { (e.currentTarget as HTMLElement).style.color = T.muted; (e.currentTarget as HTMLElement).style.borderColor = T.border2 } }}
+          >
+            <svg className="w-3 h-3" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 4v12M4 10h12"/>
+            </svg>
+          </button>
+          {/* Upload */}
+          <button title="Upload file" onClick={() => uploadRef.current?.click()}
+            className="w-6 h-6 flex items-center justify-center rounded transition-colors"
+            style={{ border: `1px solid ${T.border2}`, color: uploading ? T.accentLt : T.muted }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = T.accentLt; (e.currentTarget as HTMLElement).style.borderColor = T.accent }}
+            onMouseLeave={e => { if (!uploading) { (e.currentTarget as HTMLElement).style.color = T.muted; (e.currentTarget as HTMLElement).style.borderColor = T.border2 } }}
+          >
+            {uploading ? (
+              <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
               </svg>
-            </button>
-          ))}
+            ) : (
+              <svg className="w-3 h-3" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10 13V7m0 0L7 10m3-3l3 3M3 17a7 7 0 1114 0H3z"/>
+              </svg>
+            )}
+          </button>
+          <input ref={uploadRef} type="file" className="hidden"
+            accept=".pdf,.docx,.doc,.png,.jpg,.jpeg,.zip"
+            onChange={e => { if (e.target.files?.[0]) { onUpload(e.target.files[0]); e.target.value = '' } }}
+          />
         </div>
       </div>
+
+      {/* Inline new-folder input */}
+      {folderMode && (
+        <div className="px-2 py-1.5 flex-shrink-0" style={{ borderBottom: `1px solid ${T.border}` }}>
+          <input
+            autoFocus
+            value={folderName}
+            onChange={e => setFolderName(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') commitFolder(); if (e.key === 'Escape') { setFolderMode(false); setFolderName('') } }}
+            placeholder="Folder name…"
+            className="w-full text-[11px] px-2 py-1 rounded outline-none"
+            style={{ background: T.bg, border: `1px solid ${T.accent}`, color: T.text, fontFamily: 'monospace' }}
+          />
+        </div>
+      )}
+
+      {/* File tree */}
       <div className="flex-1 overflow-y-auto py-1.5 px-1 flex flex-col">
-        {MOCK_TREE.length === 0 ? (
+        {files.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-2 px-4 py-8">
             <svg className="w-5 h-5 opacity-20" viewBox="0 0 20 20" fill="currentColor" style={{ color: T.text }}>
               <path fillRule="evenodd" d="M2 6a2 2 0 012-2h4l2 2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd"/>
@@ -231,11 +310,12 @@ function VaultSidebar({ selected, onSelect }: { selected: string | null; onSelec
             <p className="text-[9px] font-mono text-center" style={{ color: T.muted }}>No files yet</p>
           </div>
         ) : (
-          MOCK_TREE.map(n => <TreeItem key={n.id} node={n} selected={selected} onSelect={onSelect} />)
+          files.map(n => <TreeItem key={n.id} node={n} selected={selected} onSelect={onSelect} />)
         )}
       </div>
+
       <div className="px-3 py-2 flex-shrink-0" style={{ borderTop: `1px solid ${T.border}` }}>
-        <p className="text-[9px] font-mono" style={{ color: T.muted }}>0 files · 0 B</p>
+        <p className="text-[9px] font-mono" style={{ color: T.muted }}>{fileCount} file{fileCount !== 1 ? 's' : ''}</p>
       </div>
     </div>
   )
@@ -536,7 +616,23 @@ function DocumentView({ regions, setRegions }: {
 }
 
 // ─── Workflow Canvas — Step 1 (Source Folder only) ────────────────────────────
-function WorkflowStep1({ contractName, onProceed }: { contractName?: string; onProceed: () => void }) {
+function WorkflowStep1({ contractName, files, uploading, onUpload, onProceed }: {
+  contractName: string
+  files: FileNode[]
+  uploading: boolean
+  onUpload: (file: File) => void
+  onProceed: () => void
+}) {
+  const uploadRef = useRef<HTMLInputElement>(null)
+  const [dragging, setDragging] = useState(false)
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (file) onUpload(file)
+  }
+
   return (
     <div
       className="flex-1 flex flex-col items-center justify-center overflow-hidden"
@@ -548,20 +644,13 @@ function WorkflowStep1({ contractName, onProceed }: { contractName?: string; onP
     >
       <style>{MARCH_CSS}</style>
 
-      {/* Source folder node */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
         className="rounded-2xl overflow-hidden"
-        style={{
-          width: 320,
-          background: T.surface2,
-          border: `1px solid ${T.border2}`,
-          boxShadow: '0 8px 40px rgba(0,0,0,0.6)',
-        }}
+        style={{ width: 340, background: T.surface2, border: `1px solid ${T.border2}`, boxShadow: '0 8px 40px rgba(0,0,0,0.6)' }}
       >
-        {/* Top stripe */}
         <div className="h-0.5" style={{ background: `linear-gradient(90deg, #facc15, #f59e0b)` }} />
         <div className="p-5">
           {/* Header */}
@@ -570,32 +659,60 @@ function WorkflowStep1({ contractName, onProceed }: { contractName?: string; onP
               style={{ background: 'rgba(250,204,21,0.1)', border: '1px solid rgba(250,204,21,0.25)' }}>
               📁
             </div>
-            <div>
-              <p className="text-[14px] font-semibold" style={{ color: T.text }}>Source Folder</p>
-              <p className="text-[11px] font-mono" style={{ color: T.muted }}>{contractName ?? 'Contract Package'}</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-[14px] font-semibold truncate" style={{ color: T.text }}>Source Folder</p>
+              <p className="text-[11px] font-mono truncate" style={{ color: T.muted }}>{contractName}</p>
             </div>
-            <div className="ml-auto">
-              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full"
-                style={{ background: 'rgba(90,90,120,0.15)', color: T.muted, border: `1px solid ${T.border2}` }}>
-                empty
-              </span>
-            </div>
+            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full flex-shrink-0"
+              style={{ background: files.length > 0 ? 'rgba(52,211,153,0.12)' : 'rgba(90,90,120,0.15)', color: files.length > 0 ? '#34d399' : T.muted, border: `1px solid ${files.length > 0 ? 'rgba(52,211,153,0.25)' : T.border2}` }}>
+              {files.length > 0 ? `● ${files.length} file${files.length !== 1 ? 's' : ''}` : 'empty'}
+            </span>
           </div>
 
-          {/* Empty state / upload area */}
+          {/* File list (if any) */}
+          {files.length > 0 && (
+            <div className="rounded-lg overflow-hidden mb-4 max-h-40 overflow-y-auto" style={{ border: `1px solid ${T.border}` }}>
+              {files.filter(f => f.type !== 'folder').map((f, i) => (
+                <div key={f.id} className="flex items-center gap-2.5 px-3 py-2"
+                  style={{ borderBottom: i < files.length - 1 ? `1px solid ${T.border}` : undefined, background: i % 2 === 0 ? T.bg : 'transparent' }}>
+                  <div className="w-4 h-4 rounded flex items-center justify-center text-[7px] font-bold text-white flex-shrink-0"
+                    style={{ background: extColor(f.type) }}>
+                    {f.type.toUpperCase().slice(0, 3)}
+                  </div>
+                  <span className="text-[10px] font-mono truncate" style={{ color: T.muted }}>{f.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Drop zone / upload area */}
           <div
-            className="rounded-lg flex flex-col items-center justify-center gap-2 py-6 mb-4"
-            style={{ border: `1px dashed ${T.border2}`, background: T.bg }}
+            onClick={() => !uploading && uploadRef.current?.click()}
+            onDragOver={e => { e.preventDefault(); setDragging(true) }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={handleDrop}
+            className="rounded-lg flex flex-col items-center justify-center gap-2 py-5 mb-4 cursor-pointer transition-colors"
+            style={{ border: `1px dashed ${dragging ? T.accent : T.border2}`, background: dragging ? `${T.accent}11` : T.bg }}
           >
-            <svg className="w-6 h-6 opacity-25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} style={{ color: T.text }}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-8m0 0l-3 3m3-3l3 3M3 17a9 9 0 1018 0"/>
-            </svg>
+            {uploading ? (
+              <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} style={{ color: T.accentLt }}>
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/>
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} style={{ color: T.text }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-8m0 0l-3 3m3-3l3 3M3 17a9 9 0 1018 0"/>
+              </svg>
+            )}
             <p className="text-[10px] font-mono text-center" style={{ color: T.muted }}>
-              No documents yet.<br/>Upload files to get started.
+              {uploading ? 'Uploading…' : 'Click or drop files here'}
             </p>
           </div>
+          <input ref={uploadRef} type="file" className="hidden"
+            accept=".pdf,.docx,.doc,.png,.jpg,.jpeg,.zip"
+            onChange={e => { if (e.target.files?.[0]) { onUpload(e.target.files[0]); e.target.value = '' } }}
+          />
 
-          {/* Proceed button */}
+          {/* Proceed */}
           <motion.button
             onClick={onProceed}
             whileHover={{ scale: 1.02, boxShadow: '0 0 20px rgba(124,58,237,0.4)' }}
@@ -611,7 +728,6 @@ function WorkflowStep1({ contractName, onProceed }: { contractName?: string; onP
         </div>
       </motion.div>
 
-      {/* Hint */}
       <p className="mt-6 text-[10px] font-mono" style={{ color: T.muted, opacity: 0.5 }}>
         Upload documents then proceed to analysis
       </p>
@@ -825,6 +941,10 @@ function RightPane({ activeTab, setActiveTab }: { activeTab: RightTab; setActive
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 export function ContractBuilder(_props: { contractId?: string; contractName?: string; token?: string }) {
+  const contractId   = _props.contractId   ?? ''
+  const contractName = _props.contractName ?? 'Untitled Contract'
+  const token        = _props.token        ?? localStorage.getItem('token') ?? ''
+
   const [step, setStep] = useState<Step>(1)
   const [view, setView] = useState<View>('workflow')
   const [selectedFile, setSelectedFile] = useState<string | null>(null)
@@ -833,6 +953,57 @@ export function ContractBuilder(_props: { contractId?: string; contractName?: st
   const [regions, setRegions] = useState<Region[]>([])
   const [rightWidth, setRightWidth] = useState(340)
   const [vaultOpen, setVaultOpen] = useState(false)
+
+  // ── File state (shared between Vault + Step 1) ─────────────────────────────
+  const [files, setFiles] = useState<FileNode[]>([])
+  const [fileCount, setFileCount] = useState(0)
+  const [uploading, setUploading] = useState(false)
+
+  const loadFiles = useCallback(async () => {
+    if (!contractId) return
+    try {
+      const res = await fetch(`${API}/contracts/${contractId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      const tree = convertTree(data.folders ?? [], data.root_documents ?? [])
+      setFiles(tree)
+      setFileCount(countFiles(tree))
+    } catch { /* network error — ignore */ }
+  }, [contractId, token])
+
+  useEffect(() => { loadFiles() }, [loadFiles])
+
+  const handleUpload = async (file: File) => {
+    if (!contractId) return
+    setUploading(true)
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      await fetch(`${API}/contracts/${contractId}/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      })
+      await loadFiles()
+    } catch { /* ignore */ } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleNewFolder = async (name: string) => {
+    if (!contractId) return
+    try {
+      await fetch(`${API}/contracts/${contractId}/folders`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, parent_id: null }),
+      })
+      await loadFiles()
+    } catch { /* ignore */ }
+  }
+
   const isDragging = useRef(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -891,7 +1062,18 @@ export function ContractBuilder(_props: { contractId?: string; contractName?: st
         </div>
 
         {/* Vault */}
-        {vaultOpen && <VaultSidebar selected={selectedFile} onSelect={handleFileSelect} />}
+        {vaultOpen && (
+          <VaultSidebar
+            contractName={contractName}
+            files={files}
+            selected={selectedFile}
+            onSelect={handleFileSelect}
+            onUpload={handleUpload}
+            onNewFolder={handleNewFolder}
+            fileCount={fileCount}
+            uploading={uploading}
+          />
+        )}
 
         {/* Center */}
         <AnimatePresence mode="wait">
@@ -903,7 +1085,13 @@ export function ContractBuilder(_props: { contractId?: string; contractName?: st
           ) : step === 1 ? (
             <motion.div key="wf1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }} className="flex-1 flex min-w-0 overflow-hidden relative">
-              <WorkflowStep1 contractName={_props.contractName} onProceed={() => setStep(2)} />
+              <WorkflowStep1
+                contractName={contractName}
+                files={files}
+                uploading={uploading}
+                onUpload={handleUpload}
+                onProceed={() => setStep(2)}
+              />
             </motion.div>
           ) : (
             <motion.div key="wf2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
