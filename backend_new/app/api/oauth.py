@@ -16,8 +16,32 @@ router = APIRouter()
 oauth_states = {}
 
 
+def _public_origin(request: Request) -> str:
+    """Resolve the public origin while respecting Vercel's forwarded headers."""
+    if settings.PUBLIC_BASE_URL:
+        return settings.PUBLIC_BASE_URL.rstrip('/')
+
+    forwarded_proto = request.headers.get('x-forwarded-proto', request.url.scheme)
+    forwarded_host = request.headers.get(
+        'x-forwarded-host',
+        request.headers.get('host', request.url.netloc)
+    )
+    return f"{forwarded_proto.split(',')[0].strip()}://{forwarded_host.split(',')[0].strip()}".rstrip('/')
+
+
+def _frontend_origin(request: Request) -> str:
+    """Resolve the frontend origin for the post-login redirect."""
+    if settings.FRONTEND_URL:
+        return settings.FRONTEND_URL.rstrip('/')
+
+    host = request.headers.get('x-forwarded-host', request.headers.get('host', ''))
+    if host.startswith(('localhost:', '127.0.0.1:')):
+        return 'http://localhost:5175'
+    return _public_origin(request)
+
+
 @router.get("/login/{provider}")
-async def oauth_login(provider: str):
+async def oauth_login(provider: str, request: Request):
     """
     Initiate OAuth login with the specified provider
 
@@ -31,7 +55,7 @@ async def oauth_login(provider: str):
     state = secrets.token_urlsafe(32)
     oauth_states[state] = provider
 
-    redirect_uri = f"http://localhost:8002/api/v1/oauth/callback/{provider}"
+    redirect_uri = f"{_public_origin(request)}/api/v1/oauth/callback/{provider}"
 
     if provider == 'google':
         params = {
@@ -68,6 +92,7 @@ async def oauth_login(provider: str):
 @router.get("/callback/{provider}")
 async def oauth_callback(
     provider: str,
+    request: Request,
     code: str,
     state: str = None,
     db: Session = Depends(get_db)
@@ -85,7 +110,7 @@ async def oauth_callback(
         if state and state not in oauth_states:
             raise HTTPException(status_code=400, detail="Invalid state parameter")
 
-        redirect_uri = f"http://localhost:8002/api/v1/oauth/callback/{provider}"
+        redirect_uri = f"{_public_origin(request)}/api/v1/oauth/callback/{provider}"
 
         async with httpx.AsyncClient() as client:
             # Exchange code for token
@@ -208,7 +233,7 @@ async def oauth_callback(
 
             # Redirect to frontend with token
             return RedirectResponse(
-                url=f"http://localhost:5175/auth/success?token={access_token}&provider={provider}"
+                url=f"{_frontend_origin(request)}/auth/success?token={access_token}&provider={provider}"
             )
 
     except Exception as e:

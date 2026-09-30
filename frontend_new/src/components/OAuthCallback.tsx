@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 
-const API_BASE_URL = 'http://localhost:8002/api/v1'
+const API_BASE_URL = '/api/v1'
 
 export function OAuthCallback() {
   const [searchParams] = useSearchParams()

@@ -43,7 +43,7 @@ const MARCH_CSS = `
   .blink { animation: blink 1.1s step-end infinite; }
 `
 
-const API = 'http://localhost:8002/api/v1'
+const API = '/api/v1'
 
 // Convert backend ContractDetail → FileNode[]
 function convertTree(folders: any[], rootDocs: any[]): FileNode[] {

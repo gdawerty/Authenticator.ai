@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion'
 import { useState, useEffect, memo, useRef } from 'react'
 
+const API_BASE_URL = '/api/v1'
+
 interface ContentUnderstanderProps {
   documentId: string
   onSpanHover?: (spanId: string | null, span?: DocumentSpan) => void
@@ -66,7 +68,7 @@ export const ContentUnderstander = memo(function ContentUnderstander({ documentI
       try {
         setIsLoadingSpans(true)
 
-        const response = await fetch(`http://localhost:8002/api/v1/documents/${documentId}/spans`)
+        const response = await fetch(`${API_BASE_URL}/documents/${documentId}/spans`)
 
         if (!response.ok) {
           throw new Error('Failed to fetch document spans')
@@ -96,7 +98,7 @@ export const ContentUnderstander = memo(function ContentUnderstander({ documentI
       setIsLoadingContext(true)
       setError(null)
 
-      const response = await fetch(`http://localhost:8002/api/v1/documents/${documentId}/analyze-context`, {
+      const response = await fetch(`${API_BASE_URL}/documents/${documentId}/analyze-context`, {
         method: 'POST'
       })
 

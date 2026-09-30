@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-const API_BASE_URL = 'http://localhost:8002/api/v1'
+const API_BASE_URL = '/api/v1'
 
 interface Contract {
   id: string

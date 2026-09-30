@@ -4,6 +4,8 @@ import { Document, Page, pdfjs } from 'react-pdf'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 
+const API_BASE_URL = '/api/v1'
+
 // Configure PDF.js worker - use version from installed package
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
@@ -55,7 +57,7 @@ export const DocumentViewer = memo(function DocumentViewer({ documentId, onClose
         hasLoadedRef.current = false
         setPdfLoaded(false)
 
-        const metadataResponse = await fetch(`http://localhost:8002/api/v1/convert/${documentId}`)
+        const metadataResponse = await fetch(`${API_BASE_URL}/convert/${documentId}`)
         if (!metadataResponse.ok) {
           throw new Error('Failed to fetch document metadata')
         }
@@ -64,7 +66,7 @@ export const DocumentViewer = memo(function DocumentViewer({ documentId, onClose
         if (!isMounted) return
 
         setMetadata(metadataData.metadata)
-        setPdfUrl(`http://localhost:8002/api/v1/pdf/${documentId}`)
+        setPdfUrl(`${API_BASE_URL}/pdf/${documentId}`)
         setIsLoading(false)
       } catch (err) {
         if (!isMounted) return
