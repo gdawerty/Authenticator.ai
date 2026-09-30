@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github-dark.min.css'
 
-const API_BASE_URL = 'http://localhost:8002/api/v1'
+const API_BASE_URL = '/api/v1'
 
 // Programming / markup / config extensions → rendered with syntax highlighting
 const CODE_EXTENSIONS = new Set([

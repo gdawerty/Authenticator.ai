@@ -1,6 +1,10 @@
 # --- Archive (old code) ---
 archive/
 
+# --- Legacy app directories (not deployed) ---
+/backend/
+/frontend/
+
 # --- Frontend (Vite + React + TypeScript) ---
 frontend_new/node_modules/
 frontend_new/dist/
@@ -60,6 +64,7 @@ data/
 !package.json
 !tsconfig*.json
 !eslint.config.js
+!vercel.json
 
 # --- Database Files ---
 *.db
@@ -101,6 +106,7 @@ backend_new/logs/
 # --- Database files (if using SQLite locally) ---
 *.sqlite3
 *.db
+*.db-*
 
 # --- Environment variables ---
 *.env

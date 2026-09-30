@@ -13,7 +13,7 @@ import { ThemeToggle } from './components/ThemeToggle'
 import { ContractsGrid } from './components/ContractsGrid'
 import { ContractBuilder } from './components/ContractBuilder'
 
-const API_BASE_URL_CONST = 'http://localhost:8002/api/v1'
+const API_BASE_URL_CONST = '/api/v1'
 
 interface ContractCreated {
   id: string

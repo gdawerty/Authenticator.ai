@@ -1,0 +1,16 @@
+# The Vercel services use backend_new and frontend_new only.
+backend/
+frontend/
+
+# Local databases and SQLite journal files must never be deployed.
+**/*.db
+**/*.db-*
+**/*.sqlite
+**/*.sqlite3
+
+# Local-only generated data.
+**/uploads/
+**/storage/
+**/__pycache__/
+**/node_modules/
+**/dist/

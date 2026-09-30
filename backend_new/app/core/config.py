@@ -43,7 +43,9 @@ class Settings(BaseSettings):
     GITHUB_CLIENT_SECRET: Optional[str] = None
     MICROSOFT_CLIENT_ID: Optional[str] = None
     MICROSOFT_CLIENT_SECRET: Optional[str] = None
-    OAUTH_REDIRECT_URI: str = "http://localhost:5175/auth/callback"
+    # Set these when the deployment sits behind a proxy or uses a separate frontend origin.
+    PUBLIC_BASE_URL: Optional[str] = None
+    FRONTEND_URL: Optional[str] = None
 
     class Config:
         env_file = ".env"
